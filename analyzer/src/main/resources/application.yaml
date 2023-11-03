@@ -1,0 +1,23 @@
+server:
+  port: 8081
+
+spring:
+  kafka:
+    bootstrapAddress: localhost:9092
+    topic:
+      payments: payments
+      suspicious-payments: suspicious-payments
+      checked-payments: checked-payments
+    consumer:
+      groupId: analyzer-group-id
+
+redis:
+  hostName: localhost
+  port: 6379
+
+feign:
+  hystrix:
+    enabled: true
+
+hostPort:
+  paymentService: http://localhost:8082

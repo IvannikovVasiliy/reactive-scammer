@@ -1,0 +1,23 @@
+server:
+  port: 8081
+
+spring:
+  kafka:
+    bootstrapAddress: broker-analyzer:29092
+    topic:
+      payments: payments
+      suspicious-payments: suspicious-payments
+      checked-payments: checked-payments
+    consumer:
+      groupId: analyzer-group-id
+
+redis:
+  hostName: redis-analyzer
+  port: 6379
+
+paymentService:
+  hostPort: http://payment-service:8082
+
+feign:
+  hystrix:
+    enabled: true
