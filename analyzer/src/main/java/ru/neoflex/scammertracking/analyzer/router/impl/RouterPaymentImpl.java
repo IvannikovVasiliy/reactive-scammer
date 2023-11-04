@@ -12,13 +12,10 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.error.exception.BadRequestException;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.mapper.SourceMapper;
+import ru.neoflex.scammertracking.analyzer.mapper.ByteArrayMapper;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.router.RouterPayment;
-import ru.neoflex.scammertracking.analyzer.service.PaymentService;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +26,7 @@ public class RouterPaymentImpl implements RouterPayment {
     private final SourceMapperImplementation sourceMapper;
     private final PaymentProducer paymentProducer;
     private final PaymentCacheRepository paymentCacheRepository;
+    private final ByteArrayMapper byteArrayMapper;
 
     @Value("${hostPort.paymentService}")
     private String paymentServiceHostPort;
@@ -93,20 +91,22 @@ public class RouterPaymentImpl implements RouterPayment {
                                             log.error("hookOnError. Error saving payment in redis, because of={}", throwable.getMessage());
                                         }
                                     });
-                            paymentProducer.sendMessage(checkedPaymentsTopic, paymentResult);
+                            paymentProducer.sendCheckedMessage(paymentResult);
                         }
 
                         @Override
                         protected void hookOnError(Throwable throwable) {
                             if (throwable instanceof BadRequestException) {
-                                paymentProducer.sendMessage(suspiciousPaymentsTopic, paymentResult);
+                                byte[] paymentResultBytes = byteArrayMapper.mapObjectToByteArray(paymentResult);
+                                paymentProducer.sendSuspiciousMessage(suspiciousPaymentsTopic, paymentResultBytes);
                                 log.info("Response. Sent message in topic={}, BadRequest because of {}",
                                         suspiciousPaymentsTopic, throwable.getMessage());
                             }
                         }
                     });
         } else {
-            paymentProducer.sendMessage(suspiciousPaymentsTopic, paymentResult);
+            byte[] paymentResultBytes = byteArrayMapper.mapObjectToByteArray(paymentResult);
+            paymentProducer.sendSuspiciousMessage(suspiciousPaymentsTopic, paymentResultBytes);
             log.info("Response. Sent message in topic={}, because latitude={}, longitude={}",
                     suspiciousPaymentsTopic, savePaymentRequest.getCoordinates().getLatitude(), savePaymentRequest.getCoordinates().getLongitude());
         }

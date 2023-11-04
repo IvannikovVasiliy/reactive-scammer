@@ -1,6 +1,8 @@
 package ru.neoflex.scammertracking.analyzer.domain.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ru.neoflex.scammertracking.analyzer.domain.model.Coordinates;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeDeserializer;
 
 import java.time.LocalDateTime;
 
@@ -69,6 +71,7 @@ public class PaymentRequestDto {
         return date;
     }
 
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     public void setDate(LocalDateTime date) {
         this.date = date;
     }

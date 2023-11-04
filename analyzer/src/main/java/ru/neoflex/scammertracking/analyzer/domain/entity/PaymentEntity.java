@@ -5,13 +5,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
 import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeDeserializer;
 import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 //@RedisHash(value = "Payment")
 @AllArgsConstructor

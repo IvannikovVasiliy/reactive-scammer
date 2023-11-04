@@ -1,17 +1,20 @@
 package ru.neoflex.scammertracking.analyzer.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.neoflex.scammertracking.analyzer.check.CheckRequest;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
-import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
+import ru.neoflex.scammertracking.analyzer.mapper.ByteArrayMapper;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
+import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.router.RouterPayment;
 import ru.neoflex.scammertracking.analyzer.service.PaymentPreAnalyzer;
 import ru.neoflex.scammertracking.analyzer.service.PaymentService;
@@ -31,6 +34,8 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
     private final CheckRequest checkRequest;
     private final ClientService clientService;
     private final RouterPayment routerPayment;
+    private final ByteArrayMapper byteArrayMapper;
+    private final ObjectMapper objectMapper;
 
     @Value("${hostPort.paymentService}")
     private String paymentServiceHostPort;
@@ -40,7 +45,7 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
     private String checkedPaymentsTopic;
 
     @Override
-    public void preAnalyzeConsumeMessage(String key, PaymentRequestDto paymentRequest) throws Exception {
+    public void preAnalyzeConsumeMessage(String key, PaymentRequestDto paymentRequest) {
         log.info("received key={} paymentRequest={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
                 key, paymentRequest.getId(), paymentRequest.getPayerCardNumber(), paymentRequest.getReceiverCardNumber(), paymentRequest.getCoordinates().getLatitude(), paymentRequest.getCoordinates().getLongitude(), paymentRequest.getDate());
 
@@ -50,7 +55,14 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
         if (isPreCheckSuspicious) {
             log.info("response. Sent message with key={} in topic={}", key, suspiciousPaymentsTopic);
             paymentResult.setTrusted(false);
-            paymentProducer.sendMessage(suspiciousPaymentsTopic, paymentResult);
+            byte[] paymentResultBytes = new byte[0];
+            try {
+                paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
+            } catch (JsonProcessingException e) {
+                log.error();
+                throw new RuntimeException(e);
+            }
+            paymentProducer.sendSuspiciousMessage(key, paymentResultBytes);
             return;
         }
 

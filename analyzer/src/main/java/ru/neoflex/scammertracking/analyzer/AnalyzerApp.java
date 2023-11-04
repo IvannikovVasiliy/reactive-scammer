@@ -1,17 +1,8 @@
 package ru.neoflex.scammertracking.analyzer;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.core.ReactiveRedisOperations;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
-import reactor.core.publisher.Flux;
-import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
-
-import java.util.UUID;
 
 @SpringBootApplication
 @RequiredArgsConstructor
