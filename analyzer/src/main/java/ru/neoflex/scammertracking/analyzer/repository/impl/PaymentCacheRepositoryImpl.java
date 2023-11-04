@@ -20,14 +20,17 @@ public class PaymentCacheRepositoryImpl implements PaymentCacheRepository {
 
     @Override
     public Mono<PaymentEntity> findPaymentByCardNumber(String payerCardNumber) {
-        log.info("find payment by card number={}", payerCardNumber);
+        log.info("findPaymentByCardNumber={}", payerCardNumber);
 //        Mono<PaymentEntity> p = reactiveHashOperations.get(HASH_KEY, payerCardNumber);
-        PaymentEntity paymentEntity = new PaymentEntity();
-        paymentEntity.setPayerCardNumber(payerCardNumber);
-        save(paymentEntity);
+//        PaymentEntity paymentEntity = new PaymentEntity();
+//        paymentEntity.setPayerCardNumber(payerCardNumber);
+//        save(paymentEntity);
 //        Mono<PaymentEntity> pa = redisTemplate.<String, PaymentEntity>opsForHash().get(HASH_KEY, payerCardNumber);
 
-        return redisTemplate.<String, PaymentEntity>opsForHash().get(HASH_KEY, payerCardNumber);
+        Mono<PaymentEntity> payment = redisTemplate
+                .<String, PaymentEntity>opsForHash()
+                .get(HASH_KEY, payerCardNumber);
+        return payment;
 //        return redisTemplate.opsForValue().get(payerCardNumber);
     }
 

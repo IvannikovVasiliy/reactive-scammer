@@ -82,7 +82,7 @@ public class PaymentServiceImpl implements PaymentService {
     //    @Override
 //    public PaymentResponseDto getLastPayment(Long id) {
 //
-//        PaymentEntity paymentEntity = jdbcTemplate.queryForObject("SELECT * FROM payments WHERE id=?", new PaymentRowMapper(), id);
+//        PaymentEntity paymentEntity = jdbcTemplate.queryForObject("SELECT * FROM payments     WHERE id=?", new PaymentRowMapper(), id);
 //        PaymentResponseDto paymentResponse = modelMapper.map(paymentEntity, PaymentResponseDto.class);
 //        paymentResponse.setCoordinates(new Coordinates(paymentEntity.getLatitude(), paymentEntity.getLongitude()));
 //

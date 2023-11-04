@@ -51,7 +51,7 @@ public class RedisConfig {
     @Primary
     public ReactiveRedisConnectionFactory lettuceConnectionFactory() {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(Duration.ofSeconds(2))
+                .commandTimeout(Duration.ofSeconds(10))
                 .shutdownTimeout(Duration.ZERO)
                 .build();
 

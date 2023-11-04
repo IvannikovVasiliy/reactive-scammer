@@ -1,9 +1,13 @@
 package ru.neoflex.scammertracking.analyzer.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeDeserializer;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -20,6 +24,9 @@ public class PaymentEntity implements Serializable {
     private Long idPayment;
     private float latitude;
     private float longitude;
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime datePayment;
     private LocalDateTime dateUpdating;
 

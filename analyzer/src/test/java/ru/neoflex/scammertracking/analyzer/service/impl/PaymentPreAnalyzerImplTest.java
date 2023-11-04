@@ -25,7 +25,7 @@ import static org.mockito.Mockito.doThrow;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @SpringJUnitConfig({AnalyzerConfig.class})
-class PaymentAnalyzerImplTest {
+class PaymentPreAnalyzerImplTest {
 
     @Mock
     private FeignService feignService;
@@ -38,7 +38,7 @@ class PaymentAnalyzerImplTest {
 //    @Mock
 //    private ModelMapper modelMapper;
     @InjectMocks
-    private PaymentAnalyzerImpl paymentAnalyzer;
+    private PaymentPreAnalyzerImpl paymentAnalyzer;
 
     @BeforeEach
     public void init() {
@@ -55,7 +55,7 @@ class PaymentAnalyzerImplTest {
 //        when(paymentService.getLastPayment(Mockito.any(PaymentRequestDto.class), Mockito.any()))
 //                .thenReturn(lastPaymentResponseDto);
 
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
     }
 
     @Test
@@ -65,7 +65,7 @@ class PaymentAnalyzerImplTest {
 //        when(paymentService.getLastPayment(Mockito.any(PaymentRequestDto.class), Mockito.any()))
 //                .thenThrow(new NotFoundException("The payment not found"));
 
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
     }
 
     @Test
@@ -74,9 +74,9 @@ class PaymentAnalyzerImplTest {
         PaymentRequestDto paymentRequest2 = new PaymentRequestDto(Constants.ID, Constants.PAYER_CARD_NUMBER, Constants.FAKE_CARD_NUMBER, Constants.COORDINATES, LocalDateTime.now());
         PaymentRequestDto paymentRequest3 = new PaymentRequestDto(Constants.ID, Constants.PAYER_CARD_NUMBER, Constants.RECEIVER_CARD_NUMBER, Constants.COORDINATES, Constants.FUTURE_DATETIME);
 
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest1);
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest2);
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest3);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest1);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest2);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest3);
     }
 
     @Test
@@ -89,6 +89,6 @@ class PaymentAnalyzerImplTest {
 //                .thenReturn(lastPaymentResponseDto);
 //        doThrow(BadRequestException.class).when(feignService).savePayment(paymentRequest);
 
-        paymentAnalyzer.analyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
+        paymentAnalyzer.preAnalyzeConsumeMessage(String.valueOf(Constants.ID), paymentRequest);
     }
 }
