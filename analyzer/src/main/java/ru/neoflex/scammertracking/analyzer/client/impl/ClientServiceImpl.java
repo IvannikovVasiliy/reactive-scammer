@@ -29,7 +29,6 @@ public class ClientServiceImpl implements ClientService {
 
         LastPaymentRequestDto lastPaymentRequestDto = new LastPaymentRequestDto(paymentRequest.getPayerCardNumber());
 
-        // try-catch
         Mono<LastPaymentResponseDto> lastPaymentResponse = WebClient
                 .create(paymentServiceHostPort)
                 .post()
@@ -69,7 +68,7 @@ public class ClientServiceImpl implements ClientService {
                 )
                 .bodyToMono(Void.class);
 
-        log.info("Output savePayment. Success");
+        log.info("Output savePayment");
         return savePayment;
     }
 }

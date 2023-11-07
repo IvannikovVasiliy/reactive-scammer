@@ -1,4 +1,4 @@
-package ru.neoflex.scammertracking.analyzer.geo;
+package ru.neoflex.scammertracking.analyzer.domain.model;
 
 public class GeoPoint {
 

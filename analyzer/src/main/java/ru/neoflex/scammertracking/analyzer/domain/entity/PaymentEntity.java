@@ -11,7 +11,6 @@ import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-//@RedisHash(value = "Payment")
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentEntity implements Serializable {
@@ -26,7 +25,6 @@ public class PaymentEntity implements Serializable {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime datePayment;
-    private LocalDateTime dateUpdating;
 
     public Long getIdPayment() {
         return idPayment;
@@ -76,14 +74,6 @@ public class PaymentEntity implements Serializable {
         this.datePayment = datePayment;
     }
 
-    public LocalDateTime getDateUpdating() {
-        return dateUpdating;
-    }
-
-    public void setDateUpdating(LocalDateTime dateUpdating) {
-        this.dateUpdating = dateUpdating;
-    }
-
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
@@ -94,7 +84,6 @@ public class PaymentEntity implements Serializable {
                 .append("\"latitude\": ").append(latitude)
                 .append("\"longitude\": ").append(longitude)
                 .append("\"datePayment\": ").append(datePayment)
-                .append("\"dateUpdating\": ").append(dateUpdating)
                 .toString();
     }
 }

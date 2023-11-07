@@ -21,8 +21,8 @@ public class PaymentProducer {
         this.kafkaBytesTemplate = kafkaBytesTemplate;
     }
 
-    private KafkaTemplate<String, PaymentResponseDto> kafkaJsonTemplate;
-    private KafkaTemplate<String, byte[]> kafkaBytesTemplate;
+    private final KafkaTemplate<String, PaymentResponseDto> kafkaJsonTemplate;
+    private final KafkaTemplate<String, byte[]> kafkaBytesTemplate;
 
     @Value("${spring.kafka.topic.suspicious-payments}")
     private String suspiciousPaymentsTopic;
@@ -52,7 +52,8 @@ public class PaymentProducer {
                 log.error("error. Unable to send bytes-array message with key={} due to : {}",
                         key, exception.getMessage());
             } else {
-                log.info("Sent message with key={} and offset=={}", key, result.getRecordMetadata().offset());
+                log.info("Sent message with key={} and offset=={} in {} ",
+                        key, result.getRecordMetadata().offset(), suspiciousPaymentsTopic);
             }
         });
     }

@@ -5,5 +5,4 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 
 public interface PaymentService {
     void processLastPayment(PaymentRequestDto paymentRequest);
-    void savePaymentAsync(SavePaymentRequestDto savePaymentRequest);
 }

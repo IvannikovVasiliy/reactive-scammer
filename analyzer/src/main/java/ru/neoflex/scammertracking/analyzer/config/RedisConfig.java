@@ -15,11 +15,11 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
+import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
 import java.time.Duration;
 
 @Configuration
-//@EnableRedisRepositories
 public class RedisConfig {
 
     @Value("${redis.hostName}")
@@ -27,31 +27,13 @@ public class RedisConfig {
     @Value("${redis.port}")
     private int port;
 
-//    @Bean
-//    public JedisConnectionFactory connectionFactory() {
-//        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
-//        configuration.setHostName(hostName);
-//        configuration.setPort(port);
-//        return new JedisConnectionFactory(configuration);
-//    }
-//
-//    @Bean
-//    public RedisTemplate<String, Object> template() {
-//        RedisTemplate<String, Object> template = new RedisTemplate<>();
-//        template.setConnectionFactory(connectionFactory());
-//        template.setKeySerializer(new StringRedisSerializer());
-//        template.setHashKeySerializer(new JdkSerializationRedisSerializer());
-//        template.setValueSerializer(new JdkSerializationRedisSerializer());
-//        template.setEnableTransactionSupport(true);
-//        template.afterPropertiesSet();
-//        return template;
-//    }
+    private final Integer REDIS_TIMEOUT = ConfigUtil.getRedisTimeout();
 
     @Bean
     @Primary
     public ReactiveRedisConnectionFactory lettuceConnectionFactory() {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(Duration.ofSeconds(10))
+                .commandTimeout(Duration.ofSeconds(REDIS_TIMEOUT))
                 .shutdownTimeout(Duration.ZERO)
                 .build();
 
@@ -63,14 +45,6 @@ public class RedisConfig {
             @Qualifier("lettuceConnectionFactory") ReactiveRedisConnectionFactory factory
     ) {
         Jackson2JsonRedisSerializer<PaymentEntity> serializer = new Jackson2JsonRedisSerializer<>(PaymentEntity.class);
-//        RedisSerializationContext.RedisSerializationContextBuilder<String, PaymentEntity> builder =
-//                RedisSerializationContext.
-//                        newSerializationContext(new StringRedisSerializer());
-//        RedisSerializationContext<String, PaymentEntity> context =
-//                builder
-//                        .value(serializer)
-//                        .hashValue(new GenericJackson2JsonRedisSerializer())
-//                        .build();
         RedisSerializationContext<String, PaymentEntity> context = RedisSerializationContext
                 .<String, PaymentEntity>newSerializationContext(new StringRedisSerializer())
                 .key(new StringRedisSerializer())
