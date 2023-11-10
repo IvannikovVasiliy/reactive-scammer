@@ -9,4 +9,7 @@ public interface PaymentRepository extends ReactiveCrudRepository<PaymentEntity,
 
     @Query("select * from payments where payer_card_number=$1 and date=(select max(date) from payments where payer_card_number=$1) LIMIT 1")
     Mono<PaymentEntity> findByPayerCardNumber(String cardNumber);
+
+    @Query("insert INTO payments values (:#{#payment.id},:#{#payment.payerCardNumber},:#{#payment.receiverCardNumber},:#{#payment.latitude},:#{#payment.longitude},:#{#payment.date})")
+    Mono<PaymentEntity> save(PaymentEntity payment);
 }

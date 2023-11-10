@@ -11,6 +11,8 @@ import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
+import java.time.Duration;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/payment")
@@ -27,39 +29,9 @@ public class PaymentController {
 
     @PostMapping("/save")
     @ResponseStatus(value = HttpStatus.CREATED)
-    public Mono<String> savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
-        paymentService.savePayment(payment);
+    public Mono<Void> savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
+        Mono<Void> saveResponse = paymentService.savePayment(payment);
 
-        return Mono.just("The payment was saved");
+        return saveResponse;
     }
-
-    //    @Autowired
-//    public PaymentController(CommonPaymentService commonPaymentService) {
-//        this.commonPaymentService = commonPaymentService;
-//    }
-//
-//    private CommonPaymentService commonPaymentService;
-
-//    @PostMapping("/last-payment")
-//    public PaymentResponseDto getLastPaymentByReceiverCardNumber(@RequestBody GetLastPaymentRequestDto payment) {
-//        PaymentResponseDto responseDto = commonPaymentService.getLastPayment(payment.getCardNumber());
-//
-//        return responseDto;
-//    }
-//
-//    @PostMapping
-//    @ResponseStatus(value = HttpStatus.CREATED)
-//    public String createPayment(@RequestBody CreatePaymentRequestDto paymentRequest) {
-//        commonPaymentService.insertPayments(paymentRequest.getIdCardNumber());
-//        String response = "The rows were created";
-//
-//        return response;
-//    }
-//
-//    @PutMapping
-//    public UpdatePaymentResponseDto updatePayment(@RequestBody UpdatePaymentRequestDto updatePaymentRequest) {
-//        UpdatePaymentResponseDto updateResponse = commonPaymentService.updatePayments(updatePaymentRequest);
-//
-//        return updateResponse;
-//    }
 }

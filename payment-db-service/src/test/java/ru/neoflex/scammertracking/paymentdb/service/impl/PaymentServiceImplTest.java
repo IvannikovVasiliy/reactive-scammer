@@ -20,7 +20,6 @@ import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
 import ru.neoflex.scammertracking.paymentdb.map.PaymentRowMapper;
-import ru.neoflex.scammertracking.paymentdb.service.LogService;
 
 import java.time.LocalDateTime;
 import java.util.Date;
