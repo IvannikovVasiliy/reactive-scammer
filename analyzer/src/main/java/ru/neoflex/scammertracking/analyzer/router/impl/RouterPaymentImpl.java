@@ -37,7 +37,6 @@ public class RouterPaymentImpl implements RouterPayment {
             clientService
                     .savePayment(savePaymentRequest)
                     .subscribe(new BaseSubscriber<>() {
-
                         @Override
                         protected void hookOnSubscribe(Subscription subscription) {
                             super.hookOnSubscribe(subscription);
