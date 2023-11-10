@@ -11,7 +11,7 @@ import ru.neoflex.scammertracking.paymentdb.service.PaymentBufferService;
 @RequiredArgsConstructor
 public class PaymentBufferServiceImpl implements PaymentBufferService {
 
-    private final JdbcTemplate jdbcTemplate;
+//    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public PaymentBufferEntity getPaymentByCardNumber(String cardNumber) {

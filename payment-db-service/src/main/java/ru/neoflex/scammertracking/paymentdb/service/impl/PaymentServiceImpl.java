@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
@@ -18,65 +20,64 @@ import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
 import ru.neoflex.scammertracking.paymentdb.map.PaymentRowMapper;
+import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
 import ru.neoflex.scammertracking.paymentdb.service.LogService;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
+import java.time.Duration;
+
 @Service
-@Transactional(isolation = Isolation.READ_COMMITTED)
+@Transactional//(isolation = Isolation.READ_COMMITTED)
 @RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
-    private final JdbcTemplate jdbcTemplate;
+    //    private final JdbcTemplate jdbcTemplate;
+    private final PaymentRepository paymentRepository;
     private final ModelMapper modelMapper;
     private final LogService logService;
 
     @Override
-    public PaymentResponseDto getLastPayment(String cardNumber) {
-        log.info("request. receiver card number={}", cardNumber);
+    public Mono<PaymentResponseDto> getLastPayment(String cardNumber) {
+        //log.info("request. receiver card number={}", cardNumber);
 
-        String query = "select * from payments where payer_card_number=? and date=(select max(date) from payments where payer_card_number=?) LIMIT 1";
-        PaymentEntity paymentEntity = null;
-        try {
-            paymentEntity = jdbcTemplate.queryForObject(query, new PaymentRowMapper(), cardNumber, cardNumber);
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Card number with id={} not found", cardNumber);
-            String errorMessage = String.format("Payer card number with id=%s not found", cardNumber);
-            throw new PaymentNotFoundException(errorMessage);
-        }
+        String errMessage = String.format("Payer card number with id=%s not found", cardNumber);
 
-        PaymentResponseDto response = modelMapper.map(paymentEntity, PaymentResponseDto.class);
-        response.setCoordinates(new Coordinates(paymentEntity.getLatitude(), paymentEntity.getLongitude()));
+        Mono<PaymentResponseDto> paymentResponse = paymentRepository
+                .findByPayerCardNumber(cardNumber)
+                .map(payment ->  modelMapper.map(payment, PaymentResponseDto.class))
+                .switchIfEmpty(
+                        Mono.error(new PaymentNotFoundException(errMessage))
+                )
+                .doOnSuccess(paymentResponseDto -> {
+                    //System.out.println(paymentResponseDto.getPayerCardNumber());
+                });
 
-        logService.insertLog(cardNumber, DbAction.SELECT, query);
-
-        log.info("response. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date={} }",
-                response.getId(), response.getPayerCardNumber(), response.getReceiverCardNumber(), response.getCoordinates().getLatitude(), response.getCoordinates().getLongitude(), response.getDate());
-
-        return response;
+        return paymentResponse;
     }
 
     @Override
-    public void savePayment(SavePaymentRequestDto payment) {
-        log.info("received. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
-                payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
+    public Mono<Void> savePayment(SavePaymentRequestDto payment) {
+//        log.info("received. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
+//                payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
+//
+//        String query = "INSERT INTO payments VALUES(?,?,?,?,?,?)";
+//        try {
+//            jdbcTemplate.update(query, payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
+//        } catch (DuplicateKeyException e) {
+//            String errorMessage = String.format("The payment with id=%s is already exist", payment.getId());
+//            log.error("error. {}", errorMessage);
+//            throw new PaymentAlreadyExistsException(errorMessage);
+//        } catch (Exception e) {
+//            log.error("error. Cannot be saved the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
+//                    payment.getId(), payment.getCoordinates(), payment.getPayerCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
+//        }
+//
+//        log.info("response. Save the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
+//                payment.getId(), payment.getCoordinates(), payment.getPayerCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
 
-        String query = "INSERT INTO payments VALUES(?,?,?,?,?,?)";
-        try {
-            jdbcTemplate.update(query, payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
-        } catch (DuplicateKeyException e) {
-            String errorMessage = String.format("The payment with id=%s is already exist", payment.getId());
-            log.error("error. {}", errorMessage);
-            throw new PaymentAlreadyExistsException(errorMessage);
-        } catch (Exception e) {
-            log.error("error. Cannot be saved the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
-                    payment.getId(), payment.getCoordinates(), payment.getPayerCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
-        }
-
-        log.info("response. Save the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
-                payment.getId(), payment.getCoordinates(), payment.getPayerCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
-
+        return Mono.empty();
     }
 
     //    @Override
