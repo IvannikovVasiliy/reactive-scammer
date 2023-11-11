@@ -3,28 +3,16 @@ package ru.neoflex.scammertracking.paymentdb.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
-import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
-import ru.neoflex.scammertracking.paymentdb.domain.enums.DbAction;
-import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
-import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
-import ru.neoflex.scammertracking.paymentdb.map.PaymentRowMapper;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
 import ru.neoflex.scammertracking.paymentdb.service.LogService;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
-
-import java.time.Duration;
 
 @Service
 @Transactional//(isolation = Isolation.READ_COMMITTED)
