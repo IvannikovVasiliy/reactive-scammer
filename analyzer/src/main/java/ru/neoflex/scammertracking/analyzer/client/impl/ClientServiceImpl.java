@@ -10,7 +10,7 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.error.exception.BadRequestException;
+import ru.neoflex.scammertracking.analyzer.exception.BadRequestException;
 import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
