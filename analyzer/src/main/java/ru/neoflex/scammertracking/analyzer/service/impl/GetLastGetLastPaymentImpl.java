@@ -11,17 +11,17 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
-import ru.neoflex.scammertracking.analyzer.error.exception.NotFoundException;
+import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.router.RouterPayment;
-import ru.neoflex.scammertracking.analyzer.service.PaymentService;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPayment;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentServiceImpl implements PaymentService {
+public class GetLastGetLastPaymentImpl implements GetLastPayment {
 
     private final PaymentCacheRepository paymentCacheRepository;
     private final SourceMapperImplementation sourceMapper;
@@ -30,7 +30,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final RouterPayment routerPayment;
 
     @Override
-    public void processLastPayment(PaymentRequestDto paymentRequest) {
+    public void process(PaymentRequestDto paymentRequest) {
         PaymentResponseDto paymentResult = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
         paymentCacheRepository
                 .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())

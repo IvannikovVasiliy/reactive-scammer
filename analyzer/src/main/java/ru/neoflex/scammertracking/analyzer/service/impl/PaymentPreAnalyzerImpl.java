@@ -11,14 +11,14 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.service.PaymentPreAnalyzer;
-import ru.neoflex.scammertracking.analyzer.service.PaymentService;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPayment;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
 
-    private final PaymentService paymentService;
+    private final GetLastPayment lastPayment;
     private final PaymentProducer paymentProducer;
     private final SourceMapperImplementation sourceMapper;
     private final CheckRequest checkRequest;
@@ -33,7 +33,7 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
 
         boolean isPreCheckSuspicious = checkRequest.preCheckSuspicious(paymentRequest);
         if (isPreCheckSuspicious) {
-            log.info("response. Sent message with key={} in suspicious-topic", key);
+            log.error("response. Sent message with key={} in suspicious-topic", key);
             paymentResult.setTrusted(false);
             byte[] paymentResultBytes = new byte[0];
             try {
@@ -45,6 +45,6 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
             return;
         }
 
-        paymentService.processLastPayment(paymentRequest);
+        lastPayment.process(paymentRequest);
     }
 }

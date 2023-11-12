@@ -1,4 +1,4 @@
-package ru.neoflex.scammertracking.analyzer.error.exception;
+package ru.neoflex.scammertracking.analyzer.exception;
 
 public class NotFoundException extends RuntimeException {
 
