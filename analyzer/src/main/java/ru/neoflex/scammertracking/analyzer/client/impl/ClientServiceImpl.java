@@ -62,7 +62,7 @@ public class ClientServiceImpl implements ClientService {
                 .onStatus(
                         httpStatus -> httpStatus.value() == Constants.BAD_REQUEST,
                         clientResponse -> {
-                            String message = String.format("Payer card number with id=%s already exists", savePaymentRequest.getPayerCardNumber());
+                            String message = String.format("Payer card number with id=%s already exists", savePaymentRequest.getId());
                             return Mono.error(new BadRequestException(message));
                         }
                 )

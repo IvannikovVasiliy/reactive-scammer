@@ -106,7 +106,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
                     @Override
                     protected void hookOnError(Throwable throwable) {
-                        log.error("hookOnError. Error saving payment in redis, because of={}", throwable.getMessage());
+                        log.error("hookOnError. error from ms-payment, because of {}", throwable.getMessage());
 
                         if (throwable instanceof NotFoundException) {
                             SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
