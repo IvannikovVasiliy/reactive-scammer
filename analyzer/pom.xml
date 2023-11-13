@@ -10,8 +10,8 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.neoflex.scammertracking.paymentdb</groupId>
-    <artifactId>payment-db-service</artifactId>
+    <groupId>com.neoflex.scammertracking.analyzer</groupId>
+    <artifactId>analyzer</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
