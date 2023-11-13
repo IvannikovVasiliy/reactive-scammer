@@ -88,34 +88,21 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
         clientService
                 .getLastPayment(paymentRequest)
-                .subscribe(new BaseSubscriber<>() {
+                .doOnNext(lastPayment -> {
+                    log.info("hookOnNext. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } }",
+                            lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate());
+                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+                })
+                .doOnError(throwable -> {
+                    log.error("hookOnError. error from ms-payment, because of {}", throwable.getMessage());
 
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
-                        log.info("hookOnSubscribe. Subscribe to payment-service for getting last payment");
+                    if (throwable instanceof NotFoundException) {
+                        SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
+                        savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
+                    } else {
+                        // timeout
                     }
-
-                    @Override
-                    protected void hookOnNext(LastPaymentResponseDto lastPayment) {
-                        super.hookOnNext(lastPayment);
-                        log.info("hookOnNext. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } }",
-                                lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate());
-                        checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
-                    }
-
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-                        log.error("hookOnError. error from ms-payment, because of {}", throwable.getMessage());
-
-                        if (throwable instanceof NotFoundException) {
-                            SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-                            savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
-                        } else {
-                            super.hookOnError(throwable);
-                            // timeout
-                        }
-                    }
-                });
+                })
+                .subscribe();
     }
 }

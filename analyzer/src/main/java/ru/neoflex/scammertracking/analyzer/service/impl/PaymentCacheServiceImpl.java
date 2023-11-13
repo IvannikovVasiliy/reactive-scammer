@@ -51,16 +51,10 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                             PaymentEntity paymentEntity = sourceMapper.sourceFromSavePaymentRequestDtoToPaymentEntity(savePaymentRequest);
                             paymentCacheRepository
                                     .save(paymentEntity)
-                                    .subscribe(new BaseSubscriber<>() {
-                                        @Override
-                                        protected void hookOnComplete() {
-                                            super.hookOnComplete();
-                                            paymentCacheRepository
-                                                    .expire()
-                                                    .doOnError(error -> log.error("Error. Expiration date not setted to payment cache"))
-                                                    .subscribe();
-                                        }
-                                    });
+                                    .doOnSuccess(payment -> paymentCacheRepository
+                                            .expire()
+                                            .doOnError(error -> log.error("Error. Expiration date not setted to payment cache"))
+                                            .subscribe());
                         }
                     }
 
