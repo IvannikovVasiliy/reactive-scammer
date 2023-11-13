@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
@@ -17,6 +18,9 @@ import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
+import ru.neoflex.scammertracking.analyzer.util.Constants;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -103,6 +107,11 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                         // timeout
                     }
                 })
+                .retryWhen(
+                        Retry
+                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
+                                .filter(throwable -> !(throwable instanceof NotFoundException))
+                )
                 .subscribe();
     }
 }
