@@ -41,7 +41,8 @@ public class PaymentServiceImpl implements PaymentService {
                     PaymentResponseDto paymentResponseDto = modelMapper.map(payment, PaymentResponseDto.class);
                     paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
                     return paymentResponseDto;
-                }).switchIfEmpty(Mono.error(new PaymentNotFoundException(errMessage)));
+                })
+                .switchIfEmpty(Mono.error(new PaymentNotFoundException(errMessage)));
 
         return paymentResponse;
     }
