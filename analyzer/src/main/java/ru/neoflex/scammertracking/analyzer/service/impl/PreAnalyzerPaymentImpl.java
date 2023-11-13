@@ -10,15 +10,15 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
-import ru.neoflex.scammertracking.analyzer.service.PaymentPreAnalyzer;
-import ru.neoflex.scammertracking.analyzer.service.GetLastPayment;
+import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
+public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
 
-    private final GetLastPayment lastPayment;
+    private final GetLastPaymentService lastPaymentService;
     private final PaymentProducer paymentProducer;
     private final SourceMapperImplementation sourceMapper;
     private final CheckRequest checkRequest;
@@ -45,6 +45,6 @@ public class PaymentPreAnalyzerImpl implements PaymentPreAnalyzer {
             return;
         }
 
-        lastPayment.process(paymentRequest);
+        lastPaymentService.process(paymentRequest);
     }
 }

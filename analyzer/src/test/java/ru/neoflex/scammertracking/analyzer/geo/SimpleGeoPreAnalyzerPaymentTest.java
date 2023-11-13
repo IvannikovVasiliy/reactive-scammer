@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-class SimpleGeoPaymentPreAnalyzerTest {
+class SimpleGeoPreAnalyzerPaymentTest {
 
     @Autowired
-    public SimpleGeoPaymentPreAnalyzerTest(SimpleGeoPaymentAnalyzer geoPaymentAnalyzer) {
+    public SimpleGeoPreAnalyzerPaymentTest(SimpleGeoPaymentAnalyzer geoPaymentAnalyzer) {
         this.geoPaymentAnalyzer = geoPaymentAnalyzer;
     }
 

@@ -15,19 +15,19 @@ import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
-import ru.neoflex.scammertracking.analyzer.router.RouterPayment;
-import ru.neoflex.scammertracking.analyzer.service.GetLastPayment;
+import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GetLastGetLastPaymentImpl implements GetLastPayment {
+public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
     private final PaymentCacheRepository paymentCacheRepository;
     private final SourceMapperImplementation sourceMapper;
     private final ClientService clientService;
     private final GeoAnalyzer geoAnalyzer;
-    private final RouterPayment routerPayment;
+    private final SavePaymentService savePaymentService;
 
     @Override
     public void process(PaymentRequestDto paymentRequest) {
@@ -38,12 +38,6 @@ public class GetLastGetLastPaymentImpl implements GetLastPayment {
 
                     PaymentEntity payment = null;
                     boolean isPaymentMonoIsEmpty = true;
-
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
-                        log.info("hookOnSubscribe. Subscribe on mono with payment in cache");
-                    }
 
                     @Override
                     protected void hookOnNext(PaymentEntity payment) {
@@ -83,7 +77,7 @@ public class GetLastGetLastPaymentImpl implements GetLastPayment {
         paymentResult.setTrusted(isTrusted);
 
         SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-        routerPayment.routePayment(isTrusted, savePaymentRequestDto, paymentResult);
+        savePaymentService.savePayment(isTrusted, savePaymentRequestDto, paymentResult);
 
         log.info("Output checkLastPaymentAsync. Finish");
     }
@@ -116,7 +110,7 @@ public class GetLastGetLastPaymentImpl implements GetLastPayment {
 
                         if (throwable instanceof NotFoundException) {
                             SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-                            routerPayment.routePayment(true, savePaymentRequestDto, paymentResult);
+                            savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
                         } else {
                             super.hookOnError(throwable);
                             // timeout

@@ -1,19 +1,17 @@
 package ru.neoflex.scammertracking.analyzer.kafka.consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.service.PaymentPreAnalyzer;
+import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +19,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -37,7 +33,7 @@ class PaymentConsumerTest {
     @InjectMocks
     private PaymentConsumer paymentConsumer;
     @Mock
-    private PaymentPreAnalyzer paymentPreAnalyzer;
+    private PreAnalyzerPayment preAnalyzerPayment;
     @Mock
     private PaymentProducer paymentProducer;
     @Mock

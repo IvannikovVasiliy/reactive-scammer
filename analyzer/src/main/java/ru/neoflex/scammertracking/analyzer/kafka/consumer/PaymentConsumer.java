@@ -10,7 +10,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.service.PaymentPreAnalyzer;
+import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
 
 import java.io.IOException;
 
@@ -19,12 +19,12 @@ import java.io.IOException;
 public class PaymentConsumer {
 
     @Autowired
-    public PaymentConsumer(PaymentPreAnalyzer paymentPreAnalyzer, PaymentProducer paymentProducer) {
-        this.paymentPreAnalyzer = paymentPreAnalyzer;
+    public PaymentConsumer(PreAnalyzerPayment preAnalyzerPayment, PaymentProducer paymentProducer) {
+        this.preAnalyzerPayment = preAnalyzerPayment;
         this.paymentProducer = paymentProducer;
     }
 
-    private final PaymentPreAnalyzer paymentPreAnalyzer;
+    private final PreAnalyzerPayment preAnalyzerPayment;
     private final PaymentProducer paymentProducer;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -36,7 +36,7 @@ public class PaymentConsumer {
 
         try {
             PaymentRequestDto paymentRequest = objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
-            paymentPreAnalyzer.preAnalyzeConsumeMessage(key, paymentRequest);
+            preAnalyzerPayment.preAnalyzeConsumeMessage(key, paymentRequest);
         } catch (IOException e) {
             log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
             paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);

@@ -2,12 +2,14 @@ package ru.neoflex.scammertracking.analyzer.domain.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import ru.neoflex.scammertracking.analyzer.domain.model.Coordinates;
 
 import java.util.Date;
 
 @Getter
 @Setter
+@ToString
 public class SavePaymentRequestDto {
 
     public SavePaymentRequestDto(long id, String payerCardNumber, String receiverCardNumber, Coordinates coordinates, Date date) {
