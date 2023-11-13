@@ -2,9 +2,7 @@ package ru.neoflex.scammertracking.paymentdb.advice;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.kotlin.CoroutineCrudRepository;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.TransactionException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
