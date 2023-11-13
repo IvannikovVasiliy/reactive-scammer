@@ -11,8 +11,8 @@ public class PaymentCacheResponseDto {
     private String payerCardNumber;
     private Long id;
     private String receiverCardNumber;
-    private float latitude;
-    private float longitude;
+    private double latitude;
+    private double longitude;
     private LocalDateTime datePayment;
     private LocalDateTime dateUpdating;
 
@@ -40,19 +40,19 @@ public class PaymentCacheResponseDto {
         this.receiverCardNumber = receiverCardNumber;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 

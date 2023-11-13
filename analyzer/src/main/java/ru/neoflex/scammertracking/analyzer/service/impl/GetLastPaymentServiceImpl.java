@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
@@ -20,6 +21,7 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
+import java.rmi.ServerException;
 import java.time.Duration;
 
 @Service
@@ -68,7 +70,6 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     protected void hookOnError(Throwable throwable) {
                         log.error("hookOnError. error getting payment-cache, because of={}", throwable.getMessage());
                         getLastPaymentFromClientService(paymentRequest, paymentResult);
-                        // timeout
                     }
                 });
     }
@@ -98,19 +99,20 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
                 })
                 .doOnError(throwable -> {
-                    log.error("hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+                    log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
 
                     if (throwable instanceof NotFoundException) {
                         SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
                         savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
-                    } else {
-                        // timeout
                     }
                 })
                 .retryWhen(
                         Retry
                                 .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
                                 .filter(throwable -> !(throwable instanceof NotFoundException))
+                                .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
+                                    throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
+                                }))
                 )
                 .subscribe();
     }

@@ -29,9 +29,7 @@ import java.time.Duration;
 public class SavePaymentServiceImpl implements SavePaymentService {
 
     private final ClientService clientService;
-    private final SourceMapperImplementation sourceMapper;
     private final PaymentProducer paymentProducer;
-    private final PaymentCacheRepository paymentCacheRepository;
     private final PaymentCacheService paymentCacheService;
     private final ObjectMapper objectMapper;
 
@@ -48,6 +46,8 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                         paymentProducer.sendCheckedMessage(paymentResult);
                     })
                     .doOnError(throwable -> {
+                        log.error("savePayment hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+
                         if (throwable instanceof BadRequestException) {
                             byte[] paymentResultBytes = new byte[0];
                             try {
@@ -58,14 +58,15 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                             }
                             paymentProducer.sendSuspiciousMessage(paymentResult.getPayerCardNumber(), paymentResultBytes);
                             log.info("Response. Sent message in suspicious-topic, BadRequest because of {}", throwable.getMessage());
-                        } else {
-                            // timeout
                         }
                     })
                     .retryWhen(
                             Retry
                                     .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
                                     .filter(throwable -> !(throwable instanceof BadRequestException))
+                                    .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
+                                        throw new RuntimeException("Error savePayment. External ms-payment failed to process after max retries");
+                                    }))
                     )
                     .subscribe();
         } else {
@@ -77,7 +78,8 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                 throw new RuntimeException(e);
             }
             paymentProducer.sendSuspiciousMessage(paymentResult.getPayerCardNumber(), paymentResultBytes);
-            log.info("Response. Sent message in suspicious-topic, because latitude={}, longitude={}", savePaymentRequest.getCoordinates().getLatitude(), savePaymentRequest.getCoordinates().getLongitude());
+            log.info("Response. Sent message in suspicious-topic, because latitude={}, longitude={}",
+                    savePaymentRequest.getCoordinates().getLatitude(), savePaymentRequest.getCoordinates().getLongitude());
         }
     }
 }

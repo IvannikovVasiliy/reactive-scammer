@@ -19,8 +19,8 @@ public class PaymentEntity implements Serializable {
     private String payerCardNumber;
     private String receiverCardNumber;
     private Long idPayment;
-    private float latitude;
-    private float longitude;
+    private double latitude;
+    private double longitude;
 
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -50,19 +50,19 @@ public class PaymentEntity implements Serializable {
         this.receiverCardNumber = receiverCardNumber;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
