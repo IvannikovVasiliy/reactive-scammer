@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import ru.neoflex.scammertracking.paymentdb.domain.dto.EditPaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.GetLastPaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
@@ -33,5 +34,13 @@ public class PaymentController {
         Mono<Void> saveResponse = paymentService.savePayment(payment);
 
         return saveResponse;
+    }
+
+    @PutMapping
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public Mono<Void> putPayment(@Valid @RequestBody EditPaymentRequestDto editPaymentRequestDto) {
+        Mono<Void> putPaymentResponse = paymentService.putPayment(editPaymentRequestDto);
+
+        return putPaymentResponse;
     }
 }
