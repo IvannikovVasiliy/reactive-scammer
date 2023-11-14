@@ -11,8 +11,8 @@ import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.MessageInfoDto;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
-import ru.neoflex.scammertracking.paymentdb.error.valid.ValidationErrorResponse;
-import ru.neoflex.scammertracking.paymentdb.error.valid.Violation;
+import ru.neoflex.scammertracking.paymentdb.error.validation.ValidationErrorResponse;
+import ru.neoflex.scammertracking.paymentdb.error.validation.Violation;
 import ru.neoflex.scammertracking.paymentdb.utils.Constants;
 
 import java.util.List;

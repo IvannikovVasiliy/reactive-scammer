@@ -14,6 +14,7 @@ import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
+import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
@@ -50,9 +51,11 @@ public class PaymentServiceImpl implements PaymentService {
                 .retryWhen(
                         Retry
                                 .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
+                                .filter(throwable -> !(throwable instanceof PaymentNotFoundException))
                                 .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-                                    throw new Runtime()
-                                });
+                                    throw new DatabaseInternalException("Database internal exception");
+                                })
+                );
 
         return paymentResponse;
     }
@@ -66,11 +69,9 @@ public class PaymentServiceImpl implements PaymentService {
         paymentEntity.setLatitude(payment.getCoordinates().getLatitude());
         paymentEntity.setLongitude(payment.getCoordinates().getLongitude());
         paymentEntity.setDate(payment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        paymentRepository
+
+        return paymentRepository
                 .insert(paymentEntity)
-                .doOnNext(x -> {
-                    System.out.println(x);
-                })
                 .doOnError(error -> {
                     if (error instanceof DuplicateKeyException) {
                         String errorMessage = String.format("The payment with id=%s is already exist", payment.getId());
@@ -82,10 +83,15 @@ public class PaymentServiceImpl implements PaymentService {
                         throw new RuntimeException(error);
                     }
                 })
-                .doOnSuccess(x ->
-                        System.out.println(x))
-                .subscribe();
-        return Mono.empty();
+                .retryWhen(
+                        Retry
+                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
+                                .filter(throwable -> !(throwable instanceof PaymentAlreadyExistsException))
+                                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                                    throw new DatabaseInternalException("Database internal exception");
+                                })
+                )
+                .then();
     }
 
     @Override
@@ -97,14 +103,30 @@ public class PaymentServiceImpl implements PaymentService {
         paymentEntity.setLongitude(editPaymentRequest.getCoordinates().getLongitude());
         paymentEntity.setDate(editPaymentRequest.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
-        paymentRepository
+        return paymentRepository
                 .save(paymentEntity)
-                .doOnError(throwable -> {
-                    if ()
-                })
-                .subscribe();
-
-        return Mono.empty();
+                .retryWhen(
+                        Retry
+                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
+                                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                                    throw new DatabaseInternalException("Database internal exception");
+                                })
+                )
+                .then();
     }
 
+    @Override
+    public Mono<Void> deletePaymentById(Long id) {
+        log.info("received deletePayment. id={}", id);
+
+        return paymentRepository
+                .deleteById(id)
+                .retryWhen(
+                        Retry
+                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
+                                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                                    throw new DatabaseInternalException("Database internal exception");
+                                })
+                );
+    }
 }
