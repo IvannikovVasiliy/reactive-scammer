@@ -1,6 +1,5 @@
 package ru.neoflex.scammertracking.paymentdb.repository;
 
-import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
