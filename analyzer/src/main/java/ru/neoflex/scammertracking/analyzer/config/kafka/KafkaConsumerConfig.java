@@ -1,4 +1,4 @@
-package ru.neoflex.scammertracking.analyzer.config;
+package ru.neoflex.scammertracking.analyzer.config.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
