@@ -29,7 +29,7 @@ services:
       - scammer-network
 
 volumes:
-  local_postgres_payment_db:
+  scammer-reactive-volume:
 
 networks:
   scammer-network:
