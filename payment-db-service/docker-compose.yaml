@@ -33,5 +33,5 @@ volumes:
 
 networks:
   scammer-network:
-    name: analyzer-network
+    name: scammer-network
     driver: bridge
