@@ -11,9 +11,9 @@ services:
       POSTGRES_PASSWORD: POSTGRES
       POSTGRES_DB: paymentdb
     volumes:
-      - local_postgres_payment_db:/var/lib/postgresql/data
+      - scammer-reactive-volume:/var/lib/postgresql/data
     networks:
-      - analyzer-network
+      - scammer-network
 
   payment-service:
     container_name: payment-service
@@ -26,12 +26,12 @@ services:
     depends_on:
       - payment-db
     networks:
-      - analyzer-network
+      - scammer-network
 
 volumes:
   local_postgres_payment_db:
 
 networks:
-  analyzer-network:
+  scammer-network:
     name: analyzer-network
     driver: bridge
