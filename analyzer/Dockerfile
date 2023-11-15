@@ -1,4 +1,4 @@
-FROM openjdk:17 as build
+FROM openjdk:17-jdk-alpine3.14 as build
 WORKDIR /analyzer
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
