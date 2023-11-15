@@ -48,7 +48,7 @@ services:
 
   analyzer-service:
     container_name: analyzer-service
-    image: analyzer
+    image: analyzer:0.0.1-SNAPSHOT
     build: ./
     ports:
       - "8081:8081"
