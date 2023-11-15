@@ -85,6 +85,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>payment-db-service</finalName>
     </build>
 
 </project>
