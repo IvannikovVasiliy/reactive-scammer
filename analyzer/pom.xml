@@ -96,7 +96,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <image>
-                        <builder>paketobuildpacks/builder-jammy-base:latest</builder>
+                        <builder>paketobuildpacks/builder-jammy-base:0.4.248</builder>
                     </image>
                     <excludes>
                         <exclude>
