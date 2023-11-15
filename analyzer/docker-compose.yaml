@@ -57,8 +57,6 @@ services:
     depends_on:
       - broker-analyzer
       - redis-analyzer
-    volumes:
-      - scammer-reactive-volume:/home/analyzer
     networks:
       - scammer-network
 
