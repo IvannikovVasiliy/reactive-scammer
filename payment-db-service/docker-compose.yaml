@@ -8,6 +8,8 @@ services:
       - 16686:16686
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - scammer-network
 
   payment-db:
     image: postgres:13
