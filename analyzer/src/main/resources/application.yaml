@@ -3,7 +3,7 @@ server:
 
 spring:
   kafka:
-    bootstrapAddress: localhost:9092
+    bootstrapAddress: localhost:9093
     topic:
       payments: payments
       suspicious-payments: suspicious-payments

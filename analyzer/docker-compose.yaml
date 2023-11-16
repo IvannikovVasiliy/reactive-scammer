@@ -9,8 +9,6 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - analyzer-network
 
   broker-analyzer:
     image: confluentinc/cp-kafka:7.3.2
@@ -30,10 +28,20 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
-
   redis-analyzer:
     image: redis/redis-stack-server:7.2.0-v0
     container_name: redis-analyzer
     ports:
       - "6379:6379"
 
+  analyzer-service:
+    container_name: analyzer-service
+    image: analyzer
+    build: ./
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - broker-analyzer
+      - redis-analyzer
