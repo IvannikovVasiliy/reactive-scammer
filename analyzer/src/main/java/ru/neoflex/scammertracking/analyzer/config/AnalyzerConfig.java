@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Scope;
 public class AnalyzerConfig {
 
     @Bean
-    @Scope("prototype")
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }

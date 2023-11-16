@@ -9,10 +9,6 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    volumes:
-      - scammer-reactive-volume:/home/zoo
-    networks:
-      - scammer-network
 
   broker-analyzer:
     image: confluentinc/cp-kafka:7.3.2
@@ -31,39 +27,10 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    volumes:
-      - scammer-reactive-volume:/home/kafka
-    networks:
-      - scammer-network
 
   redis-analyzer:
     image: redis/redis-stack-server:7.2.0-v0
     container_name: redis-analyzer
     ports:
       - "6379:6379"
-    volumes:
-      - scammer-reactive-volume:/home/redis
-    networks:
-      - scammer-network
 
-  analyzer-service:
-    container_name: analyzer-service
-    image: analyzer:0.0.1-SNAPSHOT
-    build: ./
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    depends_on:
-      - broker-analyzer
-      - redis-analyzer
-    networks:
-      - scammer-network
-
-volumes:
-  scammer-reactive-volume:
-
-networks:
-  scammer-network:
-    name: scammer-network
-    driver: bridge

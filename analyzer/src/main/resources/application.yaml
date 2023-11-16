@@ -10,24 +10,14 @@ spring:
       checked-payments: checked-payments
     consumer:
       groupId: analyzer-group-id
-  application:
-    name: analyzer-reactive
 
 redis:
   hostName: localhost
   port: 6379
 
-feign:
-  hystrix:
-    enabled: true
-
 hostPort:
   paymentService: http://localhost:8082
 
-tracing:
-  url: http://localhost:4318/v1/traces
-
-management:
-  tracing:
-    sampling:
-      probability: 1.0
+logging:
+  level:
+    ru.neoflex.scammertracking.analyzer: debug
