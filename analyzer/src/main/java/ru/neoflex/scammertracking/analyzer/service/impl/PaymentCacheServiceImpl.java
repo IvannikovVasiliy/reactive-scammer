@@ -51,10 +51,14 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                             PaymentEntity paymentEntity = sourceMapper.sourceFromSavePaymentRequestDtoToPaymentEntity(savePaymentRequest);
                             paymentCacheRepository
                                     .save(paymentEntity)
+                                    .doOnError(err -> {
+                                        System.out.println(err);
+                                    })
                                     .doOnSuccess(payment -> paymentCacheRepository
                                             .expire()
                                             .doOnError(error -> log.error("Error. Expiration date not setted to payment cache"))
-                                            .subscribe());
+                                            .subscribe())
+                                    .subscribe();
                         }
                     }
 

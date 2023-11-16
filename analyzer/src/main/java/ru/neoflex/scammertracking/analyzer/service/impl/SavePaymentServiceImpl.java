@@ -40,7 +40,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                         paymentProducer.sendCheckedMessage(paymentResult);
                     })
                     .doOnError(throwable -> {
-                        log.error("savePayment hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+                        log.error("savePayment error. error from ms-payment, because of {}", throwable.getMessage());
 
                         if (throwable instanceof BadRequestException) {
                             byte[] paymentResultBytes = new byte[0];
