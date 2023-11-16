@@ -15,9 +15,9 @@ redis:
   hostName: redis-analyzer
   port: 6379
 
-paymentService:
-  hostPort: http://payment-service:8082
+hostPort:
+  paymentService: http://localhost:8082
 
 logging:
   level:
-    root: info
+    ru.neoflex.scammertracking.analyzer: info
