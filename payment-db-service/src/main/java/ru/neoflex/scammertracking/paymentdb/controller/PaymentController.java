@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.GetLastPaymentRequestDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
@@ -18,18 +19,18 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/last-payment")
-    public PaymentResponseDto getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
-        PaymentResponseDto responseDto = paymentService.getLastPayment(payment.getCardNumber());
+    public Mono<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
+        Mono<PaymentResponseDto> responseDto = paymentService.getLastPayment(payment.getCardNumber());
 
         return responseDto;
     }
 
     @PostMapping("/save")
     @ResponseStatus(value = HttpStatus.CREATED)
-    public String savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
+    public Mono<String> savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
         paymentService.savePayment(payment);
 
-        return "The payment was saved";
+        return Mono.just("The payment was saved");
     }
 
     //    @Autowired

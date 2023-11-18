@@ -1,15 +1,16 @@
 package ru.neoflex.scammertracking.analyzer.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeDeserializer;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
-//@RedisHash(value = "Payment")
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentEntity implements Serializable {
@@ -18,10 +19,12 @@ public class PaymentEntity implements Serializable {
     private String payerCardNumber;
     private String receiverCardNumber;
     private Long idPayment;
-    private float latitude;
-    private float longitude;
+    private double latitude;
+    private double longitude;
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime datePayment;
-    private LocalDateTime dateUpdating;
 
     public Long getIdPayment() {
         return idPayment;
@@ -47,19 +50,19 @@ public class PaymentEntity implements Serializable {
         this.receiverCardNumber = receiverCardNumber;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
@@ -69,14 +72,6 @@ public class PaymentEntity implements Serializable {
 
     public void setDatePayment(LocalDateTime datePayment) {
         this.datePayment = datePayment;
-    }
-
-    public LocalDateTime getDateUpdating() {
-        return dateUpdating;
-    }
-
-    public void setDateUpdating(LocalDateTime dateUpdating) {
-        this.dateUpdating = dateUpdating;
     }
 
     @Override
@@ -89,7 +84,6 @@ public class PaymentEntity implements Serializable {
                 .append("\"latitude\": ").append(latitude)
                 .append("\"longitude\": ").append(longitude)
                 .append("\"datePayment\": ").append(datePayment)
-                .append("\"dateUpdating\": ").append(dateUpdating)
                 .toString();
     }
 }

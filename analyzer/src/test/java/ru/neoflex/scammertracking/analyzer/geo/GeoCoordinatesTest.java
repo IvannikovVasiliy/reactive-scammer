@@ -1,6 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.geo;
 
 import org.junit.jupiter.api.Test;
+import ru.neoflex.scammertracking.analyzer.domain.model.GeoPoint;
 import ru.neoflex.scammertracking.analyzer.utils.Constants;
 
 import static java.lang.Math.abs;

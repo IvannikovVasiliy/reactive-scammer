@@ -1,11 +1,8 @@
 package ru.neoflex.scammertracking.analyzer.geo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ru.neoflex.scammertracking.analyzer.domain.model.GeoPoint;
 
 public class GeoCoordinates {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GeoCoordinates.class);
 
     public static double calculateDistance(GeoPoint gp1, GeoPoint gp2) {
         // Based on http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf

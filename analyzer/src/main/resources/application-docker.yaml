@@ -15,9 +15,9 @@ redis:
   hostName: redis-analyzer
   port: 6379
 
-paymentService:
-  hostPort: http://payment-service:8082
+hostPort:
+  paymentService: http://payment-service:8082
 
-feign:
-  hystrix:
-    enabled: true
+logging:
+  level:
+    ru.neoflex.scammertracking.analyzer: info

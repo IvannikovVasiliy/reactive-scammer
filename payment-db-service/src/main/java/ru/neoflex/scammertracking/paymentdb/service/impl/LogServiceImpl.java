@@ -12,15 +12,15 @@ import ru.neoflex.scammertracking.paymentdb.service.LogService;
 @Slf4j
 public class LogServiceImpl implements LogService {
 
-    private final JdbcTemplate jdbcTemplate;
+//    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void insertLog(String cardNumber, DbAction action, String queryPayment) {
-        log.info("prepare to insert log: {}", queryPayment);
-
-        final String query = "INSERT INTO logs(id_payer_card_number, query, action) VALUES(?, ?, ?)";
-        jdbcTemplate.update(query, cardNumber, queryPayment, action.name());
-
-        log.info("insert in database log: {}", queryPayment);
+//        log.info("prepare to insert log: {}", queryPayment);
+//
+//        final String query = "INSERT INTO logs(id_payer_card_number, query, action) VALUES(?, ?, ?)";
+//        jdbcTemplate.update(query, cardNumber, queryPayment, action.name());
+//
+//        log.info("insert in database log: {}", queryPayment);
     }
 }
