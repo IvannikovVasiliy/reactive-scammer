@@ -48,3 +48,7 @@ atlassian-ide-plugin.xml
 
 # VS Code
 .vscode/
+
+.mvn
+mvnw
+mvnw.cmd
