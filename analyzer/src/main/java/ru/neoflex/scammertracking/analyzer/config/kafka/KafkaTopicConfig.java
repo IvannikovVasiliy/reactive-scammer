@@ -42,7 +42,7 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic topic2() {
+    public NewTopic topicCheckedPayments() {
         CustomLogs.logCreateTopicCheckedPayments();
         return TopicBuilder
                 .name("checked-payments")
@@ -53,9 +53,19 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic topic3() {
+    public NewTopic topicSuspiciousPayments() {
         CustomLogs.logCreateTopicSuspiciousPayments();
         return TopicBuilder.name("suspicious-payments")
+                .partitions(ConfigUtil.getCountPartitionsTopicSuspiciousPayments())
+                .replicas(ConfigUtil.getCountReplicasTopicSuspiciousPayments())
+                .compact()
+                .build();
+    }
+
+    @Bean
+    public NewTopic topicBackoffPayments() {
+        CustomLogs.logCreateTopicSuspiciousPayments();
+        return TopicBuilder.name("backoff-payments")
                 .partitions(ConfigUtil.getCountPartitionsTopicSuspiciousPayments())
                 .replicas(ConfigUtil.getCountReplicasTopicSuspiciousPayments())
                 .compact()

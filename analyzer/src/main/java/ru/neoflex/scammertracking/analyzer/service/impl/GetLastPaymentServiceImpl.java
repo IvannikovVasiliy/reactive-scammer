@@ -1,5 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,10 +15,11 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
+import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
-import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
+import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.time.Duration;
@@ -31,6 +34,8 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private final ClientService clientService;
     private final GeoAnalyzer geoAnalyzer;
     private final SavePaymentService savePaymentService;
+    private final PaymentProducer paymentProducer;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void process(PaymentRequestDto paymentRequest) {
@@ -108,9 +113,19 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                                 .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
                                 .filter(throwable -> !(throwable instanceof NotFoundException))
                                 .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
+                                    sendBackoffMessageInKafka(paymentRequest);
                                     throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
                                 }))
                 )
                 .subscribe();
+    }
+
+    private void sendBackoffMessageInKafka(PaymentRequestDto paymentRequest) {
+        try {
+            byte[] backoffBytesPayment = objectMapper.writeValueAsBytes(paymentRequest);
+            paymentProducer.sendBackoffMessage(String.valueOf(paymentRequest.getId()), backoffBytesPayment);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

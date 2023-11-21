@@ -26,6 +26,9 @@ public class ConfigUtil {
     public static Integer getCountPartitionsTopicSuspiciousPayments() {
         return config.getInt("countPartitionsTopicSuspiciousPayments");
     }
+    public static Integer getCountPartitionsTopicBackoffPayments() {
+        return config.getInt("countPartitionsTopicBackoffPayments");
+    }
 
     public static Integer getCountReplicasTopicPayments() {
         return config.getInt("countReplicasTopicPayments");
@@ -35,5 +38,8 @@ public class ConfigUtil {
     }
     public static Integer getCountReplicasTopicSuspiciousPayments() {
         return config.getInt("countReplicasTopicSuspiciousPayments");
+    }
+    public static Integer getCountReplicasTopicBackoffPayments() {
+        return config.getInt("countReplicasTopicBackoffPayments");
     }
 }

@@ -10,8 +10,8 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
-import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
+import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
 
 @Service
 @Slf4j
@@ -40,8 +40,9 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
                 paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
             } catch (JsonProcessingException e) {
                 log.error("Unable to parse paymentResult into bytes");
+            } finally {
+                paymentProducer.sendSuspiciousMessage(key, paymentResultBytes);
             }
-            paymentProducer.sendSuspiciousMessage(key, paymentResultBytes);
             return;
         }
 

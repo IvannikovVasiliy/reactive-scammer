@@ -28,6 +28,8 @@ public class PaymentProducer {
     private String suspiciousPaymentsTopic;
     @Value("${spring.kafka.topic.checked-payments}")
     private String checkedPaymentsTopic;
+    @Value("${spring.kafka.topic.backoff-payments}")
+    private String backoffPaymentsTopic;
 
     public void sendCheckedMessage(PaymentResponseDto payment) {
         CompletableFuture<SendResult<String, PaymentResponseDto>> future = kafkaJsonTemplate.send(checkedPaymentsTopic, String.valueOf(payment.getId()), payment);
@@ -54,6 +56,21 @@ public class PaymentProducer {
             } else {
                 log.info("Sent message with key={} and offset=={} in {} ",
                         key, result.getRecordMetadata().offset(), suspiciousPaymentsTopic);
+            }
+        });
+    }
+
+    public void sendBackoffMessage(String key, byte[] payment) {
+        log.info("Input sendBackoffMessage. Received key={} and bytes array", key);
+
+        CompletableFuture<SendResult<String, byte[]>> future = kafkaBytesTemplate.send(backoffPaymentsTopic, key, payment);
+        future.whenCompleteAsync((result, exception) -> {
+            if (null != exception) {
+                log.error("error. Unable to send bytes-array message with key={} in {} due to : {}",
+                        key, backoffPaymentsTopic, exception.getMessage());
+            } else {
+                log.info("Sent message with key={} and offset=={} in {} ",
+                        key, result.getRecordMetadata().offset(), backoffPaymentsTopic);
             }
         });
     }

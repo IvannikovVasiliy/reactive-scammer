@@ -8,6 +8,7 @@ spring:
       payments: payments
       suspicious-payments: suspicious-payments
       checked-payments: checked-payments
+      backoff-payments: backoff-payments
     consumer:
       groupId: analyzer-group-id
 
