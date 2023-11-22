@@ -48,7 +48,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                                 paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
                             } catch (JsonProcessingException e) {
                                 log.error("Unable to parse paymentResult into bytes");
-                                throw new RuntimeException(e);
+                                throw new RuntimeException(throwable.getMessage());
                             }
                             paymentProducer.sendSuspiciousMessage(paymentResult.getPayerCardNumber(), paymentResultBytes);
                             log.info("Response. Sent message in suspicious-topic, BadRequest because of {}", throwable.getMessage());
