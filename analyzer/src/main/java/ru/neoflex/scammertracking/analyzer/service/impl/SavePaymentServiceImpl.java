@@ -43,7 +43,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                         log.error("savePayment error. error from ms-payment, because of {}", throwable.getMessage());
 
                         if (throwable instanceof BadRequestException) {
-                            byte[] paymentResultBytes = new byte[0];
+                            byte[] paymentResultBytes;
                             try {
                                 paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
                             } catch (JsonProcessingException e) {
@@ -64,7 +64,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                     )
                     .subscribe();
         } else {
-            byte[] paymentResultBytes = new byte[0];
+            byte[] paymentResultBytes;
             try {
                 paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
             } catch (JsonProcessingException e) {
