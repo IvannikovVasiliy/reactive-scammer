@@ -45,15 +45,16 @@ public class PaymentServiceImpl implements PaymentService {
 
         List<PaymentResponseDto> paymentResponseList = new ArrayList<>();
 
-        Flux
+        return Flux
                 .fromIterable(paymentRequest)
-                .doOnNext(paymentRequestDto -> {
+                .flatMap(paymentRequestDto -> {
                     String cardNumber = paymentRequestDto.getCardNumber();
                     String errMessage = String.format("Payer card number with id=%s not found", cardNumber);
 
                     PaymentResponseDto paymentResp = null;
 
-                    paymentRepository
+                    PaymentResponseDto paymentResponse = null;
+                    return paymentRepository
                             .findByPayerCardNumber(cardNumber)
                             .map(payment -> {
                                 PaymentResponseDto paymentResponseDto = modelMapper.map(payment, PaymentResponseDto.class);
@@ -68,17 +69,17 @@ public class PaymentServiceImpl implements PaymentService {
                                             .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
                                                 throw new DatabaseInternalException("Database internal exception");
                                             })
-                            )
-                            .subscribe(new BaseSubscriber<PaymentResponseDto>() {
-                                @Override
-                                protected void hookOnNext(PaymentResponseDto value) {
-                                    super.hookOnNext(value);
-                                    paymentResponseList.add(value);
-                                }
-                            });
+                            );
+//                            .subscribe(new BaseSubscriber<PaymentResponseDto>() {
+//                                @Override
+//                                protected void hookOnNext(PaymentResponseDto value) {
+//                                    super.hookOnNext(value);
+////                                    paymentResponseList.add(value);
+//                                }
+//                            });
                 });
 
-        return Flux.fromIterable(paymentResponseList);
+//        return Flux.fromIterable(paymentResponseList);
     }
 
 //        Mono<PaymentResponseDto> paymentResponse = paymentRepository
