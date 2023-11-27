@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -37,23 +38,23 @@ public class PaymentConsumer {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    //    @KafkaListener(topics = "${spring.kafka.topic.payments}", containerFactory = "paymentsKafkaListenerContainerFactory")
-    public void consumePayment(@Payload byte[] paymentRequestBytes,
-                               @Header(KafkaHeaders.RECEIVED_KEY) String key) {
-        log.info("Input consumePayment. Received key={} bytes array", key);
+//    @KafkaListener(topics = "${spring.kafka.topic.payments}", containerFactory = "paymentsKafkaListenerContainerFactory")
+//    public void consumePayment(@Payload byte[] paymentRequestBytes,
+//                               @Header(KafkaHeaders.RECEIVED_KEY) String key) {
+//        log.info("Input consumePayment. Received key={} bytes array", key);
+//
+//        try {
+//            PaymentRequestDto paymentRequest = objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
+//            preAnalyzerPayment.preAnalyzeConsumeMessage(key, paymentRequest);
+//        } catch (IOException e) {
+//            log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
+//            paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
+//        }
+//    }
 
-        try {
-            PaymentRequestDto paymentRequest = objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
-            preAnalyzerPayment.preAnalyzeConsumeMessage(key, paymentRequest);
-        } catch (IOException e) {
-            log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
-            paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
-        }
-    }
-
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 500)
     public void method() {
-        ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofSeconds(1));
+        ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
         byte[] paymentRequestBytes = null;
         String key = null;
 
@@ -75,6 +76,6 @@ public class PaymentConsumer {
 //        }
 //        System.out.println("------------");
 
-        // close
+//         close
     }
 }
