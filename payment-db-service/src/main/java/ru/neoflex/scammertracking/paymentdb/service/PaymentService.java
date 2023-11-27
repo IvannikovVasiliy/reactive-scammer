@@ -15,7 +15,7 @@ import java.util.List;
 public interface PaymentService {
     Mono<Void> savePayment(@Valid SavePaymentRequestDto payment);
 //    Mono<PaymentResponseDto> getLastPayment(@Size(min = 6, max = 60, message = "The length of cardNumber should be between 6 and 60") String cardNumber);
-    Flux<PaymentResponseDto> getLastPayment(@Size(min = 6, max = 60, message = "The length of cardNumber should be between 6 and 60") List<GetLastPaymentRequestDto> payments);
+    Flux<PaymentResponseDto> getLastPayment(/*@Size(min = 6, max = 60, message = "The length of cardNumber should be between 6 and 60")*/ List<GetLastPaymentRequestDto> payments);
     Mono<Void> putPayment(@Valid EditPaymentRequestDto editPaymentRequestDto);
     Mono<Void> deletePaymentById(@NotNull Long id);
 //    PaymentResponseDto getLastPayment(Long id);
