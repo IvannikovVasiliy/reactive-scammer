@@ -12,7 +12,7 @@ public class DestroyConfig {
     private final Consumer<String, byte[]> consumer;
 
     @PreDestroy
-    public void destroy() {
+    public void closeConsumer() {
         consumer.commitSync();
         consumer.close();
     }

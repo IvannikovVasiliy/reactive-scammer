@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.SignalType;
 import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
@@ -24,6 +25,8 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -39,51 +42,66 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void process(PaymentRequestDto paymentRequest) {
-        PaymentResponseDto paymentResult = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
-        paymentCacheRepository
-                .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
-                .subscribe(new BaseSubscriber<>() {
+    public void process(List<PaymentRequestDto> paymentRequests) {
+        log.info("process. received paymentRequests");
 
-                    Subscription subscription;
-                    PaymentEntity payment = null;
-                    boolean isPaymentMonoIsEmpty = true;
+        List<Map.Entry<PaymentRequestDto, PaymentResponseDto>> payments = new ArrayList<>();
+        AtomicInteger counter = new AtomicInteger();
+        for (var paymentRequest : paymentRequests) {
+            PaymentResponseDto paymentResult =
+                    sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
 
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
-                        this.subscription = subscription;
-                        subscription.request(1);
-                    }
+            paymentCacheRepository
+                    .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
+                    .subscribe(new BaseSubscriber<>() {
 
-                    @Override
-                    protected void hookOnNext(PaymentEntity payment) {
-                        super.hookOnNext(payment);
-                        log.info("hookOnNext. payment = { payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={} }",
-                                payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
-                        this.payment = payment;
-                        isPaymentMonoIsEmpty = false;
-                        subscription.request(1);
-                    }
+                        Subscription subscription;
+                        boolean isPaymentMonoIsEmpty = true;
 
-                    @Override
-                    protected void hookOnComplete() {
-                        super.hookOnComplete();
-                        log.info("hookOnComplete. Finish getting payment from cache.");
-                        if (isPaymentMonoIsEmpty) {
-                            getLastPaymentFromClientService(paymentRequest, paymentResult);
-                        } else {
-                            LastPaymentResponseDto lastPayment = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
-                            checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+                        @Override
+                        protected void hookOnSubscribe(Subscription subscription) {
+                            super.hookOnSubscribe(subscription);
+//                        this.subscription = subscription;
+//                        subscription.request(1);
                         }
-                    }
 
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-                        log.error("hookOnError. error getting payment-cache, because of={}", throwable.getMessage());
-                        getLastPaymentFromClientService(paymentRequest, paymentResult);
-                    }
-                });
+                        @Override
+                        protected void hookOnNext(PaymentEntity payment) {
+                            super.hookOnNext(payment);
+                            log.info("hookOnNext. payment = { payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={} }",
+                                    payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
+                            isPaymentMonoIsEmpty = false;
+//                        subscription.request(1);
+                        }
+
+                        @Override
+                        protected void hookOnComplete() {
+                            super.hookOnComplete();
+                            log.info("hookOnComplete. Finish getting payment from cache.");
+                            counter.incrementAndGet();
+                            if (!isPaymentMonoIsEmpty) {
+                                payments.add(Map.entry(paymentRequest, paymentResult));
+                            } else {
+                                payments.add(Map.entry(paymentRequest, null));
+                            }
+
+                            if (counter.get() == paymentRequests.size()) {
+                                getLastPaymentFromClientService(payments);
+                            }
+                        }
+
+                        @Override
+                        protected void hookOnError(Throwable throwable) {
+                            log.error("hookOnError. error getting payment-cache, because of={}", throwable.getMessage());
+
+                            payments.add(Map.entry(paymentRequest, null));
+
+                            if (counter.get() == paymentRequests.size()) {
+                                getLastPaymentFromClientService(payments);
+                            }
+                        }
+                    });
+        }
     }
 
     private void checkLastPaymentAsync(LastPaymentResponseDto lastPayment, PaymentRequestDto paymentRequest, PaymentResponseDto paymentResult) {
@@ -99,23 +117,24 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
         log.info("Output checkLastPaymentAsync. Finish");
     }
 
-    private void getLastPaymentFromClientService(PaymentRequestDto paymentRequest, PaymentResponseDto paymentResult) {
-        log.info("Input getLastPaymentFromClientService. paymentRequest={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }, paymentResult={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={}, trusted = {} }",
-                paymentRequest.getId(), paymentRequest.getPayerCardNumber(), paymentRequest.getReceiverCardNumber(), paymentRequest.getCoordinates().getLatitude(), paymentRequest.getCoordinates().getLongitude(), paymentRequest.getDate(), paymentResult.getId(), paymentResult.getPayerCardNumber(), paymentResult.getReceiverCardNumber(), paymentResult.getCoordinates().getLatitude(), paymentResult.getCoordinates().getLongitude(), paymentResult.getDate(), paymentResult.getTrusted());
+    private void getLastPaymentFromClientService(List<Map.Entry<PaymentRequestDto, PaymentResponseDto>> payments) {
+        log.info("Input getLastPaymentFromClientService. received map with current payments and payments from cache");
+
+        List<PaymentRequestDto> paymentsList = payments.stream().map(payment -> payment.getKey()).toList();
 
         clientService
-                .getLastPayment(paymentRequest)
+                .getLastPayment(paymentsList)
                 .doOnNext(lastPayment -> {
                     log.info("hookOnNext. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } }",
                             lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate());
-                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+//                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
                 })
                 .doOnError(throwable -> {
                     log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
 
                     if (throwable instanceof NotFoundException) {
-                        SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-                        savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
+//                        SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
+//                        savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
                     }
                 })
                 .retryWhen(
@@ -123,7 +142,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                                 .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
                                 .filter(throwable -> !(throwable instanceof NotFoundException))
                                 .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
-                                    sendBackoffMessageInKafka(paymentRequest);
+//                                    sendBackoffMessageInKafka(paymentRequest);
                                     throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
                                 }))
                 )

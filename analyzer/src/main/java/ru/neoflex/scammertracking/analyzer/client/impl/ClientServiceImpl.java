@@ -4,16 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.*;
 import ru.neoflex.scammertracking.analyzer.exception.BadRequestException;
 import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -23,26 +24,23 @@ public class ClientServiceImpl implements ClientService {
     private String paymentServiceHostPort;
 
     @Override
-    public Mono<LastPaymentResponseDto> getLastPayment(PaymentRequestDto paymentRequest) {
-        log.info("Input getLastPayment. paymentRequest={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
-                paymentRequest.getId(), paymentRequest.getPayerCardNumber(), paymentRequest.getReceiverCardNumber(), paymentRequest.getCoordinates().getLatitude(), paymentRequest.getCoordinates().getLongitude(), paymentRequest.getDate());
+    public Flux<LastPaymentResponseDto> getLastPayment(List<PaymentRequestDto> paymentRequests) {
+        log.info("Input getLastPayment. received list of payments");
 
-        LastPaymentRequestDto lastPaymentRequestDto = new LastPaymentRequestDto(paymentRequest.getPayerCardNumber());
-
-        Mono<LastPaymentResponseDto> lastPaymentResponse = WebClient
+        Flux<LastPaymentResponseDto> lastPaymentResponse = WebClient
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.getLastPaymentEndpoint())
-                .bodyValue(lastPaymentRequestDto)
+                .bodyValue(paymentRequests)
                 .retrieve()
                 .onStatus(
                         httpStatus -> httpStatus.value() == Constants.NOT_FOUND,
                         clientResponse -> {
-                            String message = String.format("Payer card number with id=%s not found", paymentRequest.getPayerCardNumber());
+                            String message = String.format("Payer card number with id=%s not found", 12);
                             return Mono.error(new NotFoundException(message));
                         }
                 )
-                .bodyToMono(LastPaymentResponseDto.class);
+                .bodyToFlux(LastPaymentResponseDto.class);
 
         log.info("Output getLastPayment. Success");
         return lastPaymentResponse;

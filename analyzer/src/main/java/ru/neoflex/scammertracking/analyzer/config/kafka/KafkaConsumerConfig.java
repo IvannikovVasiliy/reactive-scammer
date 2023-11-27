@@ -32,20 +32,6 @@ public class KafkaConsumerConfig {
     private String paymentTopic;
 
     @Bean
-    public ConsumerFactory<String, byte[]> consumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-//        props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000);
-        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.MAX_VALUE);
-//        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1000);
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new ByteArrayDeserializer());
-    }
-
-    @Bean
     public Consumer<String, byte[]> createConsumer() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -53,20 +39,11 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        //props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.MAX_VALUE);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
-//        props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Arrays.asList(paymentTopic));
         return consumer;
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, byte[]> paymentsKafkaListenerContainerFactory() {
-        var factory = new ConcurrentKafkaListenerContainerFactory<String, byte[]>();
-        factory.setConsumerFactory(consumerFactory());
-        return factory;
     }
 }
