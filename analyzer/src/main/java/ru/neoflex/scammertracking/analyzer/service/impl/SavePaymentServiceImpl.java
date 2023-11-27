@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
@@ -62,7 +64,23 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                                         throw new RuntimeException("Error savePayment. External ms-payment failed to process after max retries");
                                     }))
                     )
-                    .subscribe();
+                    .subscribe(new BaseSubscriber<Void>() {
+
+                        Subscription subscription;
+
+                        @Override
+                        protected void hookOnSubscribe(Subscription subscription) {
+                            super.hookOnSubscribe(subscription);
+                            this.subscription = subscription;
+                            subscription.request(1);
+                        }
+
+                        @Override
+                        protected void hookOnNext(Void value) {
+                            super.hookOnNext(value);
+                            subscription.request(1);
+                        }
+                    });
         } else {
             byte[] paymentResultBytes;
             try {

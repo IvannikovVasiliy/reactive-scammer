@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.util.retry.Retry;
@@ -44,8 +45,16 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                 .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
                 .subscribe(new BaseSubscriber<>() {
 
+                    Subscription subscription;
                     PaymentEntity payment = null;
                     boolean isPaymentMonoIsEmpty = true;
+
+                    @Override
+                    protected void hookOnSubscribe(Subscription subscription) {
+                        super.hookOnSubscribe(subscription);
+                        this.subscription = subscription;
+                        subscription.request(1);
+                    }
 
                     @Override
                     protected void hookOnNext(PaymentEntity payment) {
@@ -54,6 +63,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                                 payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
                         this.payment = payment;
                         isPaymentMonoIsEmpty = false;
+                        subscription.request(1);
                     }
 
                     @Override
@@ -117,7 +127,23 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                                     throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
                                 }))
                 )
-                .subscribe();
+                .subscribe(new BaseSubscriber<LastPaymentResponseDto>() {
+
+                    Subscription subscription;
+
+                    @Override
+                    protected void hookOnSubscribe(Subscription subscription) {
+                        super.hookOnSubscribe(subscription);
+                        this.subscription = subscription;
+                        subscription.request(1);
+                    }
+
+                    @Override
+                    protected void hookOnNext(LastPaymentResponseDto value) {
+                        super.hookOnNext(value);
+                        subscription.request(1);
+                    }
+                });
     }
 
     private void sendBackoffMessageInKafka(PaymentRequestDto paymentRequest) {

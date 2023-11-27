@@ -3,9 +3,10 @@ package ru.neoflex.scammertracking.analyzer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @SpringBootApplication
-@RequiredArgsConstructor
 public class AnalyzerApp {
 
     public static void main(String[] args) {

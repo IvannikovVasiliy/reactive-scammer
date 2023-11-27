@@ -27,12 +27,15 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                 .findPaymentByCardNumber(savePaymentRequest.getPayerCardNumber())
                 .subscribe(new BaseSubscriber<>() {
 
+                    Subscription subscription;
                     PaymentEntity payment = null;
 
                     @Override
                     protected void hookOnSubscribe(Subscription subscription) {
                         super.hookOnSubscribe(subscription);
                         log.info("hookOnSubscribe. Subscribe to payment-service for saving payment");
+                        this.subscription = subscription;
+                        subscription.request(1);
                     }
 
                     @Override
@@ -41,6 +44,7 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                         log.info("hookOnNext. get payment from cache. payment={ payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={} }",
                                 payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
                         this.payment = payment;
+                        subscription.request(1);
                     }
 
                     @Override
@@ -57,8 +61,40 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                                     .doOnSuccess(payment -> paymentCacheRepository
                                             .expire()
                                             .doOnError(error -> log.error("Error. Expiration date not setted to payment cache"))
-                                            .subscribe())
-                                    .subscribe();
+                                            .subscribe(new BaseSubscriber<>() {
+
+                                                Subscription subscription;
+
+                                                @Override
+                                                protected void hookOnSubscribe(Subscription subscription) {
+                                                    super.hookOnSubscribe(subscription);
+                                                    this.subscription = subscription;
+                                                    subscription.request(1);
+                                                }
+
+                                                @Override
+                                                protected void hookOnNext(Boolean value) {
+                                                    super.hookOnNext(value);
+                                                    subscription.request(1);
+                                                }
+                                            }))
+                                    .subscribe(new BaseSubscriber<Boolean>() {
+
+                                        Subscription subscription;
+
+                                        @Override
+                                        protected void hookOnSubscribe(Subscription subscription) {
+                                            super.hookOnSubscribe(subscription);
+                                            this.subscription = subscription;
+                                            subscription.request(1);
+                                        }
+
+                                        @Override
+                                        protected void hookOnNext(Boolean value) {
+                                            super.hookOnNext(value);
+                                            subscription.request(1);
+                                        }
+                                    });
                         }
                     }
 
