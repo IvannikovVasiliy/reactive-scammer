@@ -2,6 +2,7 @@ package ru.neoflex.scammertracking.paymentdb.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/payment")
 public class PaymentController {
 
@@ -27,6 +29,7 @@ public class PaymentController {
 
     @PostMapping("/last-payment")
     public Flux<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody List<GetLastPaymentRequestDto> payments) {
+        log.info("Request last-payment");
         Flux<PaymentResponseDto> responseDto = paymentService.getLastPayment(payments);
 
         return responseDto;
