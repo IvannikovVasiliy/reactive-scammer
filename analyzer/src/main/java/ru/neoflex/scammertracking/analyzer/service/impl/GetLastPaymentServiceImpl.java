@@ -141,6 +141,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     @Override
                     protected void hookOnNext(LastPaymentResponseDto lastPayment) {
                         super.hookOnNext(lastPayment);
+                        log.info("hookOnNext. lastPayment = {}", lastPayment);
                         subscription.request(1);
                         counter.incrementAndGet();
 //                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
@@ -158,10 +159,10 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
                         counter.incrementAndGet();
                         if (throwable instanceof WebClientResponseException.NotFound) {
-//                            if (counter.get() == payments.size()) {
+                            if (counter.get() == payments.size()) {
 //                                SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
 //                                savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
-//                            }
+                            }
                         }
                     }
                 });
