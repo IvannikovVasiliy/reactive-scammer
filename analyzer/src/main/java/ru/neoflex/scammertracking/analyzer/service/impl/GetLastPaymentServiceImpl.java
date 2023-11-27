@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.SignalType;
 import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
@@ -15,6 +14,7 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
+import ru.neoflex.scammertracking.analyzer.domain.model.ConsumeMessage;
 import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
@@ -25,7 +25,9 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -45,7 +47,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     public void process(List<PaymentRequestDto> paymentRequests) {
         log.info("process. received paymentRequests");
 
-        List<Map.Entry<PaymentRequestDto, PaymentResponseDto>> payments = new ArrayList<>();
+        List<ConsumeMessage> payments = new ArrayList<>();
         AtomicInteger counter = new AtomicInteger();
         for (var paymentRequest : paymentRequests) {
             PaymentResponseDto paymentResult =
@@ -61,8 +63,8 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                         @Override
                         protected void hookOnSubscribe(Subscription subscription) {
                             super.hookOnSubscribe(subscription);
-//                        this.subscription = subscription;
-//                        subscription.request(1);
+                            this.subscription = subscription;
+                            subscription.request(1);
                         }
 
                         @Override
@@ -71,7 +73,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                             log.info("hookOnNext. payment = { payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={} }",
                                     payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
                             isPaymentMonoIsEmpty = false;
-//                        subscription.request(1);
+                            subscription.request(1);
                         }
 
                         @Override
@@ -80,21 +82,24 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                             log.info("hookOnComplete. Finish getting payment from cache.");
                             counter.incrementAndGet();
                             if (!isPaymentMonoIsEmpty) {
-                                payments.add(Map.entry(paymentRequest, paymentResult));
+                                payments.add(new ConsumeMessage(paymentRequest, paymentResult));
                             } else {
-                                payments.add(Map.entry(paymentRequest, null));
+                                payments.add(new ConsumeMessage(paymentRequest, null));
                             }
 
                             if (counter.get() == paymentRequests.size()) {
                                 getLastPaymentFromClientService(payments);
                             }
+                            log.info("3");
                         }
 
                         @Override
                         protected void hookOnError(Throwable throwable) {
                             log.error("hookOnError. error getting payment-cache, because of={}", throwable.getMessage());
 
-                            payments.add(Map.entry(paymentRequest, null));
+//                            payments.add(Map.entry(paymentRequest, null));
+                            payments.add(new ConsumeMessage(paymentRequest, null));
+                            counter.incrementAndGet();
 
                             if (counter.get() == paymentRequests.size()) {
                                 getLastPaymentFromClientService(payments);
@@ -117,7 +122,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
         log.info("Output checkLastPaymentAsync. Finish");
     }
 
-    private void getLastPaymentFromClientService(List<Map.Entry<PaymentRequestDto, PaymentResponseDto>> payments) {
+    private void getLastPaymentFromClientService(List<ConsumeMessage> payments) {
         log.info("Input getLastPaymentFromClientService. received map with current payments and payments from cache");
 
         List<PaymentRequestDto> paymentsList = payments.stream().map(payment -> payment.getKey()).toList();

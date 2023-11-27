@@ -1,30 +1,31 @@
 package ru.neoflex.scammertracking.analyzer.domain.model;
 
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 
 public class ConsumeMessage {
 
-    public ConsumeMessage(String key, PaymentRequestDto paymentRequest) {
+    public ConsumeMessage(PaymentRequestDto key, PaymentResponseDto paymentRequest) {
         this.key = key;
         this.paymentRequest = paymentRequest;
     }
 
-    private String key;
-    private PaymentRequestDto paymentRequest;
+    private PaymentRequestDto key;
+    private PaymentResponseDto paymentRequest;
 
-    public String getKey() {
+    public PaymentRequestDto getKey() {
         return key;
     }
 
-    public void setKey(String key) {
+    public void setKey(PaymentRequestDto key) {
         this.key = key;
     }
 
-    public PaymentRequestDto getPaymentRequest() {
+    public PaymentResponseDto getPaymentRequest() {
         return paymentRequest;
     }
 
-    public void setPaymentRequest(PaymentRequestDto paymentRequest) {
+    public void setPaymentRequest(PaymentResponseDto paymentRequest) {
         this.paymentRequest = paymentRequest;
     }
 }
