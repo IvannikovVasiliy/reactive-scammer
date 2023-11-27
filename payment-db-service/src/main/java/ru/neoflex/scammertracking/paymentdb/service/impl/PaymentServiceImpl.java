@@ -40,13 +40,13 @@ public class PaymentServiceImpl implements PaymentService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Flux<PaymentResponseDto> getLastPayment(List<GetLastPaymentRequestDto> paymentRequest) {
-        log.info("request getLastPayment. receive list of paymentRequest");
+    public Flux<PaymentResponseDto> getLastPayment(List<GetLastPaymentRequestDto> paymentRequests) {
+        log.info("request getLastPayment. receive list of paymentRequests. size of list = {}", paymentRequests.size());
 
         List<PaymentResponseDto> paymentResponseList = new ArrayList<>();
 
         return Flux
-                .fromIterable(paymentRequest)
+                .fromIterable(paymentRequests)
                 .flatMap(paymentRequestDto -> {
                     String cardNumber = paymentRequestDto.getCardNumber();
                     String errMessage = String.format("Payer card number with id=%s not found", cardNumber);
