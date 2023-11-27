@@ -4,9 +4,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,9 +18,16 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+//    @PostMapping("/last-payment")
+//    public Mono<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
+//        Mono<PaymentResponseDto> responseDto = paymentService.getLastPayment(payment.getCardNumber());
+//
+//        return responseDto;
+//    }
+
     @PostMapping("/last-payment")
-    public Mono<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
-        Mono<PaymentResponseDto> responseDto = paymentService.getLastPayment(payment.getCardNumber());
+    public Flux<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody List<GetLastPaymentRequestDto> payments) {
+        Flux<PaymentResponseDto> responseDto = paymentService.getLastPayment(payments);
 
         return responseDto;
     }
