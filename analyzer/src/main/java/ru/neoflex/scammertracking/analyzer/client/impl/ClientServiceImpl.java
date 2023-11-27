@@ -33,13 +33,13 @@ public class ClientServiceImpl implements ClientService {
                 .uri(ConfigUtil.getLastPaymentEndpoint())
                 .bodyValue(paymentRequests)
                 .retrieve()
-                .onStatus(
-                        httpStatus -> httpStatus.value() == Constants.NOT_FOUND,
-                        clientResponse -> {
-                            String message = String.format("Payer card number with id=%s not found", 12);
-                            return Mono.error(new NotFoundException(message));
-                        }
-                )
+//                .onStatus(
+//                        httpStatus -> httpStatus.value() == Constants.NOT_FOUND,
+//                        clientResponse -> {
+//                            String message = String.format("Payer card number with id=%s not found", 12);
+//                            return Mono.error(new NotFoundException(message));
+//                        }
+//                )
                 .bodyToFlux(LastPaymentResponseDto.class);
 
         log.info("Output getLastPayment. Success");
