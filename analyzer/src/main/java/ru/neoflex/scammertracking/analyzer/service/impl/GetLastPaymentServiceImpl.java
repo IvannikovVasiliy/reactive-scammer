@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.BaseSubscriber;
-import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
@@ -15,19 +15,15 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.domain.model.ConsumeMessage;
-import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
-import ru.neoflex.scammertracking.analyzer.util.Constants;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -129,31 +125,10 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
         clientService
                 .getLastPayment(paymentsList)
-                .doOnNext(lastPayment -> {
-                    log.info("hookOnNext. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } }",
-                            lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate());
-//                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
-                })
-                .doOnError(throwable -> {
-                    log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
-
-                    if (throwable instanceof NotFoundException) {
-//                        SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-//                        savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
-                    }
-                })
-                .retryWhen(
-                        Retry
-                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
-                                .filter(throwable -> !(throwable instanceof NotFoundException))
-                                .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
-//                                    sendBackoffMessageInKafka(paymentRequest);
-                                    throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
-                                }))
-                )
                 .subscribe(new BaseSubscriber<LastPaymentResponseDto>() {
 
                     Subscription subscription;
+                    AtomicInteger counter = new AtomicInteger();
 
                     @Override
                     protected void hookOnSubscribe(Subscription subscription) {
@@ -163,11 +138,88 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     }
 
                     @Override
-                    protected void hookOnNext(LastPaymentResponseDto value) {
-                        super.hookOnNext(value);
+                    protected void hookOnNext(LastPaymentResponseDto lastPayment) {
+                        super.hookOnNext(lastPayment);
                         subscription.request(1);
+                        counter.incrementAndGet();
+//                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+                    }
+
+                    @Override
+                    protected void hookOnComplete() {
+                        super.hookOnComplete();
+                    }
+
+                    @Override
+                    protected void hookOnError(Throwable throwable) {
+                        super.hookOnError(throwable);
+                        log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+
+                        counter.incrementAndGet();
+                        if (throwable instanceof WebClientResponseException.NotFound) {
+//                            if (counter.get() == payments.size()) {
+//                                SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
+//                                savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
+//                            }
+                        }
                     }
                 });
+
+
+//        clientService
+//                .getLastPayment(paymentsList)
+//                .retryWhen(
+//                        Retry
+//                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
+//                                .filter(throwable -> !(throwable instanceof NotFoundException))
+//                                .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
+////                                    sendBackoffMessageInKafka(paymentRequest);
+//                                    throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
+//                                }))
+//                )
+//                .subscribe(new BaseSubscriber<LastPaymentResponseDto>() {
+//
+//                    Subscription subscription;
+//                    AtomicInteger counter = new AtomicInteger();
+//
+//                    List<>
+//
+//                    @Override
+//                    protected void hookOnSubscribe(Subscription subscription) {
+//                        super.hookOnSubscribe(subscription);
+//                        this.subscription = subscription;
+//                        subscription.request(1);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnNext(LastPaymentResponseDto lastPayment) {
+//                        super.hookOnNext(lastPayment);
+//                        subscription.request(1);
+//                        log.info("hookOnNext. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } }",
+//                                lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate());
+//                        counter.incrementAndGet();
+////                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnComplete() {
+//                        super.hookOnComplete();
+//                    }
+//
+//                    @Override
+//                    protected void hookOnError(Throwable throwable) {
+//                        super.hookOnError(throwable);
+//                        log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+//
+//                        counter.incrementAndGet();
+//                        if (throwable instanceof WebClientResponseException.NotFound) {
+//                            if (counter.get() == payments.size()) {
+//                                SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
+//                                savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
+//                            }
+//                        }
+//                    }
+//                });
     }
 
     private void sendBackoffMessageInKafka(PaymentRequestDto paymentRequest) {
