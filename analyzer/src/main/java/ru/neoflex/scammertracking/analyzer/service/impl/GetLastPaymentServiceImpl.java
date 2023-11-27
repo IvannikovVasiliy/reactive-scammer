@@ -133,6 +133,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     @Override
                     protected void hookOnSubscribe(Subscription subscription) {
                         super.hookOnSubscribe(subscription);
+                        log.info("hookOnSubscribe");
                         this.subscription = subscription;
                         subscription.request(1);
                     }
