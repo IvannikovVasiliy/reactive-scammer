@@ -134,15 +134,15 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     protected void hookOnSubscribe(Subscription subscription) {
                         super.hookOnSubscribe(subscription);
                         log.info("hookOnSubscribe");
-                        this.subscription = subscription;
-                        subscription.request(1);
+//                        this.subscription = subscription;
+//                        subscription.request(1);
                     }
 
                     @Override
                     protected void hookOnNext(LastPaymentResponseDto lastPayment) {
                         super.hookOnNext(lastPayment);
                         log.info("hookOnNext. lastPayment = {}", lastPayment);
-                        subscription.request(1);
+//                        subscription.request(1);
                         counter.incrementAndGet();
 //                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
                     }
