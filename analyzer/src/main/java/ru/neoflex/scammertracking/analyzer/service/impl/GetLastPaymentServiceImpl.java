@@ -154,7 +154,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
                     @Override
                     protected void hookOnError(Throwable throwable) {
-                        super.hookOnError(throwable);
+//                        super.hookOnError(throwable);
                         log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
 
                         counter.incrementAndGet();
