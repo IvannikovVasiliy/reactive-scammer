@@ -30,7 +30,7 @@ public class PaymentController {
 //        return responseDto;
 //    }
 
-    @PostMapping(value = "/last-payment", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/last-payment", produces = MediaType.APPLICATION_CBOR)
     public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPaymentByPayerCardNumber(
             @Valid @RequestBody List<GetLastPaymentRequestDto> payments
     ) {
