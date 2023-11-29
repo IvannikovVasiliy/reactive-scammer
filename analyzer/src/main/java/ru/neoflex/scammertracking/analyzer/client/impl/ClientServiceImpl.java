@@ -31,7 +31,7 @@ public class ClientServiceImpl implements ClientService {
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.getLastPaymentEndpoint())
-                .bodyValue(Map.Entry.class)
+                .bodyValue(paymentRequests)
                 .retrieve()
 //                .onStatus(
 //                        httpStatus -> httpStatus.value() == Constants.NOT_FOUND,
