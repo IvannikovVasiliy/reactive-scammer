@@ -28,6 +28,8 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional//(isolation = Isolation.READ_COMMITTED)
@@ -40,7 +42,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Flux<PaymentResponseDto> getLastPayment(List<GetLastPaymentRequestDto> paymentRequests) {
+    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPayment(List<GetLastPaymentRequestDto> paymentRequests) {
         log.info("request getLastPayment. receive list of paymentRequests. size of list = {}", paymentRequests.size());
 
         List<PaymentResponseDto> paymentResponseList = new ArrayList<>();
@@ -60,17 +62,17 @@ public class PaymentServiceImpl implements PaymentService {
                             .map(payment -> {
                                 PaymentResponseDto paymentResponseDto = modelMapper.map(payment, PaymentResponseDto.class);
                                 paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
-                                return paymentResponseDto;
+                                return Map.entry(paymentRequestDto, Optional.of(paymentResponseDto));
                             })
-                            .switchIfEmpty(Mono.error(new PaymentNotFoundException(errMessage)))
-                            .retryWhen(
-                                    Retry
-                                            .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
-                                            .filter(throwable -> !(throwable instanceof PaymentNotFoundException))
-                                            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-                                                throw new DatabaseInternalException("Database internal exception");
-                                            })
-                            );
+                            .switchIfEmpty(Mono.just(Map.entry(paymentRequestDto, Optional.empty())));
+//                            .retryWhen(
+//                                    Retry
+//                                            .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
+//                                            .filter(throwable -> !(throwable instanceof PaymentNotFoundException))
+//                                            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+//                                                throw new DatabaseInternalException("Database internal exception");
+//                                            })
+//                            );
 //                            .subscribe(new BaseSubscriber<PaymentResponseDto>() {
 //                                @Override
 //                                protected void hookOnNext(PaymentResponseDto value) {

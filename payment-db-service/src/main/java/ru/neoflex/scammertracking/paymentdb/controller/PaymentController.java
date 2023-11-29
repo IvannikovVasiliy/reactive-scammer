@@ -11,6 +11,8 @@ import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,9 +30,9 @@ public class PaymentController {
 //    }
 
     @PostMapping("/last-payment")
-    public Flux<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody List<GetLastPaymentRequestDto> payments) {
+    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPaymentByPayerCardNumber(@Valid @RequestBody List<GetLastPaymentRequestDto> payments) {
         log.info("Request last-payment");
-        Flux<PaymentResponseDto> responseDto = paymentService.getLastPayment(payments);
+        Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> responseDto = paymentService.getLastPayment(payments);
 
         return responseDto;
     }
