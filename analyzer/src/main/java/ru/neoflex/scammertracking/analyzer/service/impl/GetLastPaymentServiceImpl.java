@@ -126,8 +126,27 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
         clientService
                 .getLastPayment(paymentsList)
-                .map(value -> value)
-                .subscribe();
+                .subscribe(new BaseSubscriber<AggregateLastPaymentDto>() {
+                    @Override
+                    protected void hookOnSubscribe(Subscription subscription) {
+                        super.hookOnSubscribe(subscription);
+                    }
+
+                    @Override
+                    protected void hookOnNext(AggregateLastPaymentDto value) {
+                        super.hookOnNext(value);
+                    }
+
+                    @Override
+                    protected void hookOnComplete() {
+                        super.hookOnComplete();
+                    }
+
+                    @Override
+                    protected void hookOnError(Throwable throwable) {
+                        super.hookOnError(throwable);
+                    }
+                });
 //                .subscribe(new BaseSubscriber<Map>() {
 //
 //                    Subscription subscription;

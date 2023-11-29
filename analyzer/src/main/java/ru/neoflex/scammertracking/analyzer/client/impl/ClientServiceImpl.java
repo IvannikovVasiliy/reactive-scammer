@@ -26,10 +26,10 @@ public class ClientServiceImpl implements ClientService {
     private String paymentServiceHostPort;
 
     @Override
-    public Flux<Map> getLastPayment(List<LastPaymentRequestDto> paymentRequests) {
+    public Flux<AggregateLastPaymentDto> getLastPayment(List<LastPaymentRequestDto> paymentRequests) {
         log.info("Input getLastPayment. received list of payments");
 
-        Flux<Map> lastPaymentResponse = WebClient
+        Flux<AggregateLastPaymentDto> lastPaymentResponse = WebClient
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.getLastPaymentEndpoint())
@@ -42,7 +42,7 @@ public class ClientServiceImpl implements ClientService {
 //                            return Mono.error(new NotFoundException(message));
 //                        }
 //                )
-                .bodyToFlux(Map.class);
+                .bodyToFlux(AggregateLastPaymentDto.class);
 
         return lastPaymentResponse;
     }
