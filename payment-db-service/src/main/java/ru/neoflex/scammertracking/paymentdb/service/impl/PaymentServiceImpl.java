@@ -48,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
         return Flux
                 .fromIterable(paymentRequests)
                 .flatMap(paymentRequestDto -> {
+                    log.info("flatMap. paymentRequestDto with id={}", paymentRequestDto);
                     String cardNumber = paymentRequestDto.getCardNumber();
                     String errMessage = String.format("Payer card number with id=%s not found", cardNumber);
 
