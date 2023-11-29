@@ -126,47 +126,49 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
         clientService
                 .getLastPayment(paymentsList)
-                .subscribe(new BaseSubscriber<Map>() {
-
-                    Subscription subscription;
-                    AtomicInteger counter = new AtomicInteger();
-
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
-                        log.info("hookOnSubscribe");
-//                        this.subscription = subscription;
-//                        subscription.request(1);
-                    }
-
-                    @Override
-                    protected void hookOnNext(Map lastPayment) {
-                        super.hookOnNext(lastPayment);
-                        log.info("hookOnNext. lastPayment = {}", lastPayment);
-//                        subscription.request(1);
-                        counter.incrementAndGet();
-//                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
-                    }
-
-                    @Override
-                    protected void hookOnComplete() {
-                        super.hookOnComplete();
-                    }
-
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-//                        super.hookOnError(throwable);
-                        log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
-
-                        counter.incrementAndGet();
-                        if (throwable instanceof WebClientResponseException.NotFound) {
-                            if (counter.get() == payments.size()) {
-//                                SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
-//                                savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
-                            }
-                        }
-                    }
-                });
+                .map(value -> value)
+                .subscribe();
+//                .subscribe(new BaseSubscriber<Map>() {
+//
+//                    Subscription subscription;
+//                    AtomicInteger counter = new AtomicInteger();
+//
+//                    @Override
+//                    protected void hookOnSubscribe(Subscription subscription) {
+//                        super.hookOnSubscribe(subscription);
+//                        log.info("hookOnSubscribe");
+////                        this.subscription = subscription;
+////                        subscription.request(1);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnNext(Map lastPayment) {
+//                        super.hookOnNext(lastPayment);
+//                        lastPayment.get(payments.get(0));
+////                        subscription.request(1);
+//                        counter.incrementAndGet();
+////                    checkLastPaymentAsync(lastPayment, paymentRequest, paymentResult);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnComplete() {
+//                        super.hookOnComplete();
+//                    }
+//
+//                    @Override
+//                    protected void hookOnError(Throwable throwable) {
+////                        super.hookOnError(throwable);
+//                        log.error("getLastPaymentFromClientService hookOnError. error from ms-payment, because of {}", throwable.getMessage());
+//
+//                        counter.incrementAndGet();
+//                        if (throwable instanceof WebClientResponseException.NotFound) {
+//                            if (counter.get() == payments.size()) {
+////                                SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(paymentRequest);
+////                                savePaymentService.savePayment(true, savePaymentRequestDto, paymentResult);
+//                            }
+//                        }
+//                    }
+//                });
 
 
 //        clientService
