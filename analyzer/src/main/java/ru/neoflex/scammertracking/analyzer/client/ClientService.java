@@ -8,6 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface ClientService {
-    Flux<Map.Entry> getLastPayment(List<LastPaymentRequestDto> payments);
+    Flux<Map> getLastPayment(List<LastPaymentRequestDto> payments);
     Mono<Void> savePayment(SavePaymentRequestDto savePaymentRequest);
 }

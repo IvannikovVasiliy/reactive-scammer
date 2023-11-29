@@ -126,7 +126,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
         clientService
                 .getLastPayment(paymentsList)
-                .subscribe(new BaseSubscriber<Map.Entry>() {
+                .subscribe(new BaseSubscriber<Map>() {
 
                     Subscription subscription;
                     AtomicInteger counter = new AtomicInteger();
@@ -140,7 +140,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     }
 
                     @Override
-                    protected void hookOnNext(Map.Entry lastPayment) {
+                    protected void hookOnNext(Map lastPayment) {
                         super.hookOnNext(lastPayment);
                         log.info("hookOnNext. lastPayment = {}", lastPayment);
 //                        subscription.request(1);

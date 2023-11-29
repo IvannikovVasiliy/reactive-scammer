@@ -2,6 +2,7 @@ package ru.neoflex.scammertracking.analyzer.client.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,10 +26,10 @@ public class ClientServiceImpl implements ClientService {
     private String paymentServiceHostPort;
 
     @Override
-    public Flux<Map.Entry> getLastPayment(List<LastPaymentRequestDto> paymentRequests) {
+    public Flux<Map> getLastPayment(List<LastPaymentRequestDto> paymentRequests) {
         log.info("Input getLastPayment. received list of payments");
 
-        Flux<Map.Entry> lastPaymentResponse = WebClient
+        Flux<Map> lastPaymentResponse = WebClient
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.getLastPaymentEndpoint())
@@ -41,7 +42,7 @@ public class ClientServiceImpl implements ClientService {
 //                            return Mono.error(new NotFoundException(message));
 //                        }
 //                )
-                .bodyToFlux(Map.Entry.class);
+                .bodyToFlux(Map.class);
 
         return lastPaymentResponse;
     }
