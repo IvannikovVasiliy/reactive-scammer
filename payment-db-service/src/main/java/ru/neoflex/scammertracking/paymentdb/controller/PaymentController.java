@@ -30,7 +30,9 @@ public class PaymentController {
 //    }
 
     @PostMapping("/last-payment")
-    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPaymentByPayerCardNumber(@Valid @RequestBody List<GetLastPaymentRequestDto> payments) {
+    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPaymentByPayerCardNumber(
+            @Valid @RequestBody List<GetLastPaymentRequestDto> payments
+    ) {
         log.info("Request last-payment");
         Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> responseDto = paymentService.getLastPayment(payments);
 
