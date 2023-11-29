@@ -2,6 +2,7 @@ package ru.neoflex.scammertracking.analyzer.client.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -54,6 +55,7 @@ public class ClientServiceImpl implements ClientService {
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.savePaymentEndpoint())
+                .accept(MediaType.ALL)
                 .bodyValue(savePaymentRequest)
                 .retrieve()
                 .onStatus(
