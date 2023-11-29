@@ -11,10 +11,7 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.EditPaymentRequestDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.GetLastPaymentRequestDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
@@ -42,10 +39,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPayment(List<GetLastPaymentRequestDto> paymentRequests) {
+    public Flux<AggregateLastPaymentDto> getLastPayment(List<GetLastPaymentRequestDto> paymentRequests) {
         log.info("request getLastPayment. receive list of paymentRequests. size of list = {}", paymentRequests.size());
-
-        List<PaymentResponseDto> paymentResponseList = new ArrayList<>();
 
         return Flux
                 .fromIterable(paymentRequests)
@@ -62,9 +57,9 @@ public class PaymentServiceImpl implements PaymentService {
                             .map(payment -> {
                                 PaymentResponseDto paymentResponseDto = modelMapper.map(payment, PaymentResponseDto.class);
                                 paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
-                                return Map.entry(paymentRequestDto, Optional.of(paymentResponseDto));
+                                return new AggregateLastPaymentDto(paymentRequestDto, paymentResponseDto);
                             })
-                            .switchIfEmpty(Mono.just(Map.entry(paymentRequestDto, Optional.empty())));
+                            .switchIfEmpty(Mono.just(new AggregateLastPaymentDto(paymentRequestDto, null)));
 //                            .retryWhen(
 //                                    Retry
 //                                            .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))

@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -12,8 +11,6 @@ import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,12 +27,12 @@ public class PaymentController {
 //        return responseDto;
 //    }
 
-    @PostMapping(value = "/last-payment", produces = MediaType.APPLICATION_CBOR)
-    public Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> getLastPaymentByPayerCardNumber(
+    @PostMapping(value = "/last-payment")
+    public Flux<AggregateLastPaymentDto> getLastPaymentByPayerCardNumber(
             @Valid @RequestBody List<GetLastPaymentRequestDto> payments
     ) {
         log.info("Request last-payment");
-        Flux<Map.Entry<GetLastPaymentRequestDto, Optional<PaymentResponseDto>>> responseDto = paymentService.getLastPayment(payments);
+        Flux<AggregateLastPaymentDto> responseDto = paymentService.getLastPayment(payments);
 
         return responseDto;
     }
