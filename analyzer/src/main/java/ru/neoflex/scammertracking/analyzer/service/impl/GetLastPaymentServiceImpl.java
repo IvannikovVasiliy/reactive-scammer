@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.BaseSubscriber;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.*;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.domain.model.ConsumeMessage;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
@@ -24,6 +21,7 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -121,11 +119,14 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private void getLastPaymentFromClientService(List<ConsumeMessage> payments) {
         log.info("Input getLastPaymentFromClientService. received map with current payments and payments from cache");
 
-        List<PaymentRequestDto> paymentsList = payments.stream().map(payment -> payment.getKey()).toList();
+        List<LastPaymentRequestDto> paymentsList = payments
+                .stream()
+                .map(payment -> new LastPaymentRequestDto(payment.getKey().getPayerCardNumber()))
+                .toList();
 
         clientService
                 .getLastPayment(paymentsList)
-                .subscribe(new BaseSubscriber<LastPaymentResponseDto>() {
+                .subscribe(new BaseSubscriber<Map.Entry>() {
 
                     Subscription subscription;
                     AtomicInteger counter = new AtomicInteger();
@@ -139,7 +140,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     }
 
                     @Override
-                    protected void hookOnNext(LastPaymentResponseDto lastPayment) {
+                    protected void hookOnNext(Map.Entry lastPayment) {
                         super.hookOnNext(lastPayment);
                         log.info("hookOnNext. lastPayment = {}", lastPayment);
 //                        subscription.request(1);
