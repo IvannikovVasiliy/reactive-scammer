@@ -1,0 +1,1 @@
+CREATE INDEX PAYMENTS_I3 ON PAYMENTS(payer_card_number);

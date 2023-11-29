@@ -1,4 +1,4 @@
-package ru.neoflex.scammertracking.paymentdb.error.valid;
+package ru.neoflex.scammertracking.paymentdb.error.validation;
 
 import java.util.List;
 
