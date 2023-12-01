@@ -28,18 +28,6 @@ public class SavePaymentServiceImpl implements SavePaymentService {
     private final ObjectMapper objectMapper;
 
     public Mono<Void> savePayment(Flux<SavePaymentDto> savePaymentDtoFlux) {
-//        savePaymentDtoFlux.subscribe(new BaseSubscriber<SavePaymentDto>() {
-//            @Override
-//            protected void hookOnNext(SavePaymentDto value) {
-//                super.hookOnNext(value);
-//            }
-//
-//            @Override
-//            protected void hookOnError(Throwable throwable) {
-//                super.hookOnError(throwable);
-//            }
-//        });
-
         savePaymentDtoFlux
                 .flatMap(val ->
                         Mono.just(val.getSavePaymentRequestDto()));

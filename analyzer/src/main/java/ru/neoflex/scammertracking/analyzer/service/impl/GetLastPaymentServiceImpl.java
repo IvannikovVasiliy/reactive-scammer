@@ -23,6 +23,7 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -41,18 +42,6 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     public Mono<Void> process(Flux<AggregateLastPaymentDto> paymentRequests) {
         log.info("process. received paymentRequests");
 
-        log.info("Input getLastPaymentFromClientService. received map with current payments and payments from cache");
-
-//        List<AnalyzeModel> lastPayments = new ArrayList<>();
-//        Flux<AnalyzeModel> lastPaymentFlux = Flux.fromIterable(lastPayments);
-//        paymentRequests.
-//                doOnNext(val -> {
-//                    if (val.getLastPayment() == null) {
-//                        lastPayments.add(val);
-//                    }
-//                })
-//                .subscribe();
-
         Flux<AggregateLastPaymentDto> f = clientService
                 .getLastPayment(paymentRequests);
 
@@ -62,35 +51,18 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
 
     private Mono<Void> checkLastPaymentAsync(Flux<AggregateLastPaymentDto> aggregatePaymentsFlux) {
-        Flux<SavePaymentDto> savePaymentFlux = aggregatePaymentsFlux
+        Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
                 .flatMap(value -> {
                     SavePaymentDto savePaymentDto = new SavePaymentDto();
-//                    if (value.getPaymentResponse() == null) {
-//                        boolean isTrusted = geoAnalyzer.checkPayment(value.getPaymentResponse(), value.getPaymentRequest());
-//                    boolean isTrusted = true;
-//                        PaymentResponseDto paymentResult = sourceMapper.sourceFromLastPaymentResponseDtoToPaymentResponseDto(value.getPaymentResponse());
-//                        paymentResult.setTrusted(isTrusted);
-//
-//                        SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
-//                        savePaymentDto.setTrusted(isTrusted);
-//                        savePaymentDto.setSavePaymentRequestDto(savePaymentRequestDto);
-//                        savePaymentDto.setPaymentResponseDto(paymentResult);
-////                    }
                     PaymentResponseDto paymentResponseDto = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(value.getPaymentRequest());
-//                    SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto()
                     savePaymentDto.setTrusted(true);
                     savePaymentDto.setPaymentResponseDto(paymentResponseDto);
                     SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
                     savePaymentDto.setSavePaymentRequestDto(savePaymentRequestDto);
-//                    savePaymentDto.setPaymentResponseDto();
                     return Mono.just(savePaymentDto);
                 })
                 .flatMap(x ->
-                        Mono.just(x));
-//                .flatMap(x -> {
-//                    System.out.println(x);
-//                    return Mono.just(new SavePaymentDto());
-//                });
+                        Mono.just(x.getSavePaymentRequestDto()));
 
         savePaymentFlux.flatMap(x -> {
             return Mono.just(x);
@@ -104,28 +76,37 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                 .bodyToFlux(Object.class)
                 .subscribe(new BaseSubscriber<Object>() {
 
+                    Subscription subscription;
+                    AtomicInteger ai = new AtomicInteger();
+
                     @Override
                     protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
+//                        super.hookOnSubscribe(subscription);
+                        this.subscription = subscription;
+                        subscription.request(100);
                     }
 
                     @Override
                     protected void hookOnNext(Object value) {
-                        super.hookOnNext(value);
+//                        super.hookOnNext(value);
+//                        if (ai.incrementAndGet() == 100) {
+//                            ai.set(0);
+//                            subscription.request(100);
+//                        }
+//                        System.out.println(value);
                     }
 
                     @Override
                     protected void hookOnComplete() {
-                        super.hookOnComplete();
+//                        super.hookOnComplete();
                     }
 
                     @Override
                     protected void hookOnError(Throwable throwable) {
-                        super.hookOnError(throwable);
+                        //super.hookOnError(throwable);
                     }
                 });
 
-//        savePaymentService.savePayment(savePaymentFlux);
         return Mono.empty();
     }
 //        Flux<AnalyzeModel> lastPaymentFlux = Flux.just();
@@ -136,6 +117,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 //                    AnalyzeModel analyzeModel = new AnalyzeModel();
 //                    analyzeModel.setPaymentRequest(paymentCache);
 //
+
 //                    paymentCacheRepository
 //                            .findPaymentByCardNumber(paymentCache.getPayerCardNumber())
 //                            .subscribe(new BaseSubscriber<>() {
