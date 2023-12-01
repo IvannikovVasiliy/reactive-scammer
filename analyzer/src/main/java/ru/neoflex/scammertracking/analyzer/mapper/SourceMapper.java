@@ -13,4 +13,5 @@ public interface SourceMapper {
     LastPaymentResponseDto sourceFromPaymentEntityToLastPaymentResponseDto(PaymentEntity paymentEntity);
     SavePaymentRequestDto sourceFromPaymentRequestDtoToSavePaymentRequestDto(PaymentRequestDto paymentRequestDto);
     PaymentEntity sourceFromSavePaymentRequestDtoToPaymentEntity(SavePaymentRequestDto savePaymentRequestDto);
+    PaymentResponseDto sourceFromLastPaymentResponseDtoToPaymentResponseDto(LastPaymentResponseDto lastPaymentResponseDto);
 }

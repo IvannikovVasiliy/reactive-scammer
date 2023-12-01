@@ -3,8 +3,11 @@ package ru.neoflex.scammertracking.paymentdb.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Subscription;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
@@ -29,20 +32,46 @@ public class PaymentController {
 
     @PostMapping(value = "/last-payment")
     public Flux<AggregateLastPaymentDto> getLastPaymentByPayerCardNumber(
-            @Valid @RequestBody List<GetLastPaymentRequestDto> payments
+            /*@Valid*/ @RequestBody Flux<AggregateLastPaymentDto> payments
     ) {
         log.info("Request last-payment");
         Flux<AggregateLastPaymentDto> responseDto = paymentService.getLastPayment(payments);
 
-        return responseDto;
+        return responseDto.flatMap(x ->
+                Mono.just(x));
     }
 
-    @PostMapping("/save")
+    @PostMapping(value = "/save", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.CREATED)
-    public Mono<Void> savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
-        Mono<Void> saveResponse = paymentService.savePayment(payment);
+    public Flux<Object> savePayment(/*@Valid*/ @RequestBody Flux<SavePaymentRequestDto> payment) {
+//        payment.subscribe(new BaseSubscriber<SavePaymentRequestDto>() {
+//            @Override
+//            protected void hookOnSubscribe(Subscription subscription) {
+//                super.hookOnSubscribe(subscription);
+//            }
+//
+//            @Override
+//            protected void hookOnNext(SavePaymentRequestDto value) {
+//                super.hookOnNext(value);
+//            }
+//
+//            @Override
+//            protected void hookOnComplete() {
+//                super.hookOnComplete();
+//            }
+//
+//            @Override
+//            protected void hookOnError(Throwable throwable) {
+//                super.hookOnError(throwable);
+//            }
+//        });
 
-        return saveResponse;
+        Flux<String> saveResponse = paymentService.savePayment(payment);
+
+        return saveResponse.flatMap(val -> {
+            return Mono.just(val);
+        });
+//        return Flux.just("str");
     }
 
     @PutMapping

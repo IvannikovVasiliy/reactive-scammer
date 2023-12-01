@@ -1,21 +1,25 @@
 package ru.neoflex.scammertracking.analyzer.client.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Subscription;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
-import ru.neoflex.scammertracking.analyzer.domain.dto.*;
+import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateLastPaymentDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.model.AnalyzeModel;
 import ru.neoflex.scammertracking.analyzer.exception.BadRequestException;
-import ru.neoflex.scammertracking.analyzer.exception.NotFoundException;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -26,49 +30,62 @@ public class ClientServiceImpl implements ClientService {
     private String paymentServiceHostPort;
 
     @Override
-    public Flux<AggregateLastPaymentDto> getLastPayment(List<LastPaymentRequestDto> paymentRequests) {
+    public Flux<AggregateLastPaymentDto> getLastPayment(Flux<AggregateLastPaymentDto> paymentRequests) {
         log.info("Input getLastPayment. received list of payments");
 
-        Flux<AggregateLastPaymentDto> lastPaymentResponse = WebClient
+        return WebClient
                 .create(paymentServiceHostPort)
                 .post()
                 .uri(ConfigUtil.getLastPaymentEndpoint())
-                .bodyValue(paymentRequests)
+                .body(paymentRequests, Flux.class)
                 .retrieve()
-                .onStatus(
-                        httpStatus -> httpStatus.value() == 200,
-                        clientResponse -> {
-                            String message = String.format("Payer card number with id=%s not found", 12);
-                            return Mono.error(new NotFoundException(message));
+                .bodyToFlux(Object.class)
+                .flatMap(value -> {
+                    AggregateLastPaymentDto aggregateModel = new AggregateLastPaymentDto();
+                    ((Map) value).forEach((k, v) -> {
+                        if ("paymentRequest".equals(k)) {
+                            PaymentRequestDto paymentRequest = new ObjectMapper().convertValue(v, PaymentRequestDto.class);
+                            aggregateModel.setPaymentRequest(paymentRequest);
+                        } else if ("paymentResponse".equals(k)) {
+                            LastPaymentResponseDto paymentResponseDto = new ObjectMapper().convertValue(v, LastPaymentResponseDto.class);
+                            aggregateModel.setPaymentResponse(paymentResponseDto);
                         }
-                )
-                .bodyToFlux(AggregateLastPaymentDto.class);
-
-        return lastPaymentResponse;
+                    });
+                    return Mono.just(aggregateModel);
+                });
     }
 
     @Override
-    public Mono<Void> savePayment(SavePaymentRequestDto savePaymentRequest) {
-        log.info("save payment. savePaymentRequest={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
-                savePaymentRequest.getId(), savePaymentRequest.getPayerCardNumber(), savePaymentRequest.getReceiverCardNumber(), savePaymentRequest.getCoordinates().getLatitude(), savePaymentRequest.getCoordinates().getLongitude(), savePaymentRequest.getDate());
-
-        Mono<Void> savePayment = WebClient
-                .create(paymentServiceHostPort)
+    public Flux<Object> savePayment(Flux<SavePaymentRequestDto> savePaymentRequest) {
+        return WebClient
+                .create("http://localhost:8082/payment/save")
                 .post()
-                .uri(ConfigUtil.savePaymentEndpoint())
-                .accept(MediaType.ALL)
-                .bodyValue(savePaymentRequest)
+                .body(savePaymentRequest, Flux.class)
                 .retrieve()
-                .onStatus(
-                        httpStatus -> httpStatus.value() == Constants.BAD_REQUEST,
-                        clientResponse -> {
-                            String message = String.format("Payer card number with id=%s already exists", savePaymentRequest.getId());
-                            return Mono.error(new BadRequestException(message));
-                        }
-                )
-                .bodyToMono(Void.class);
-
-        log.info("Output savePayment");
-        return savePayment;
+                .bodyToFlux(String.class)
+                .flatMap(x ->
+                        Mono.just(x));
     }
+
+//        lastPaymentResponse.subscribe(new BaseSubscriber<AggregateLastPaymentDto>() {
+//            @Override
+//            protected void hookOnSubscribe(Subscription subscription) {
+//                super.hookOnSubscribe(subscription);
+//            }
+//
+//            @Override
+//            protected void hookOnNext(AggregateLastPaymentDto value) {
+//                super.hookOnNext(value);
+//            }
+//
+//            @Override
+//            protected void hookOnComplete() {
+//                super.hookOnComplete();
+//            }
+//
+//            @Override
+//            protected void hookOnError(Throwable throwable) {
+//                super.hookOnError(throwable);
+//            }
+//        });
 }

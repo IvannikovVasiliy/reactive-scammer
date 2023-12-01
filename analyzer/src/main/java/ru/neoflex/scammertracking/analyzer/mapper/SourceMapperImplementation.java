@@ -84,4 +84,20 @@ public class SourceMapperImplementation {
 
         return paymentEntity;
     }
+
+    public PaymentResponseDto sourceFromLastPaymentResponseDtoToPaymentResponseDto(LastPaymentResponseDto lastPaymentResponseDto) {
+        if ( lastPaymentResponseDto == null ) {
+            return null;
+        }
+
+        PaymentResponseDto paymentResponseDto = new PaymentResponseDto();
+
+        paymentResponseDto.setId( lastPaymentResponseDto.getId() );
+        paymentResponseDto.setPayerCardNumber( lastPaymentResponseDto.getPayerCardNumber() );
+        paymentResponseDto.setReceiverCardNumber( lastPaymentResponseDto.getReceiverCardNumber() );
+        paymentResponseDto.setCoordinates( lastPaymentResponseDto.getCoordinates() );
+        paymentResponseDto.setDate( lastPaymentResponseDto.getDate() );
+
+        return paymentResponseDto;
+    }
 }

@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class AggregateLastPaymentDto {
 
-    public AggregateLastPaymentDto(GetLastPaymentRequestDto paymentRequest, PaymentResponseDto paymentResponse) {
+    public AggregateLastPaymentDto(LastPaymentRequestDto paymentRequest, PaymentResponseDto paymentResponse) {
         this.paymentRequest = paymentRequest;
         this.paymentResponse = paymentResponse;
     }
@@ -15,6 +15,6 @@ public class AggregateLastPaymentDto {
     public AggregateLastPaymentDto() {
     }
 
-    private GetLastPaymentRequestDto paymentRequest;
+    private LastPaymentRequestDto paymentRequest;
     private PaymentResponseDto paymentResponse;
 }

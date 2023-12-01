@@ -2,12 +2,13 @@ package ru.neoflex.scammertracking.analyzer.client;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.neoflex.scammertracking.analyzer.domain.dto.*;
-
-import java.util.List;
-import java.util.Map;
+import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateLastPaymentDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.model.AnalyzeModel;
 
 public interface ClientService {
-    Flux<AggregateLastPaymentDto> getLastPayment(List<LastPaymentRequestDto> payments);
-    Mono<Void> savePayment(SavePaymentRequestDto savePaymentRequest);
+    Flux<AggregateLastPaymentDto> getLastPayment(Flux<AggregateLastPaymentDto> payments);
+
+    //    Mono<Void> savePayment(SavePaymentRequestDto savePaymentRequest);
+    Flux<Object> savePayment(Flux<SavePaymentRequestDto> savePaymentRequest);
 }
