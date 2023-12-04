@@ -12,8 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.*;
-import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
-import ru.neoflex.scammertracking.analyzer.domain.model.AnalyzeModel;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
@@ -21,8 +19,6 @@ import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -51,61 +47,103 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
 
     private Mono<Void> checkLastPaymentAsync(Flux<AggregateLastPaymentDto> aggregatePaymentsFlux) {
-        Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
-                .flatMap(value -> {
+        Flux<SavePaymentDto> savePaymentFlux = aggregatePaymentsFlux
+                .map(value -> {
                     SavePaymentDto savePaymentDto = new SavePaymentDto();
                     PaymentResponseDto paymentResponseDto = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(value.getPaymentRequest());
                     savePaymentDto.setTrusted(true);
                     savePaymentDto.setPaymentResponseDto(paymentResponseDto);
                     SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
                     savePaymentDto.setSavePaymentRequestDto(savePaymentRequestDto);
-                    return Mono.just(savePaymentDto);
-                })
-                .flatMap(x ->
-                        Mono.just(x.getSavePaymentRequestDto()));
-
-        savePaymentFlux.flatMap(x -> {
-            return Mono.just(x);
-        });
-
-        WebClient
-                .create("http://localhost:8082/payment/save")
-                .post()
-                .body(savePaymentFlux, Flux.class)
-                .retrieve()
-                .bodyToFlux(Object.class)
-                .subscribe(new BaseSubscriber<Object>() {
-
-                    Subscription subscription;
-                    AtomicInteger ai = new AtomicInteger();
-
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-//                        super.hookOnSubscribe(subscription);
-                        this.subscription = subscription;
-                        subscription.request(100);
-                    }
-
-                    @Override
-                    protected void hookOnNext(Object value) {
-//                        super.hookOnNext(value);
-//                        if (ai.incrementAndGet() == 100) {
-//                            ai.set(0);
-//                            subscription.request(100);
-//                        }
-//                        System.out.println(value);
-                    }
-
-                    @Override
-                    protected void hookOnComplete() {
-//                        super.hookOnComplete();
-                    }
-
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-                        //super.hookOnError(throwable);
-                    }
+                    return savePaymentDto;
                 });
+
+        savePaymentService.savePayment(savePaymentFlux);
+//        WebClient
+//                .create("http://localhost:8082/payment/save")
+//                .post()
+//                .body((Object) savePaymentFlux.map(x ->
+//                        x.getSavePaymentRequestDto()), Flux.class)
+//                .retrieve()
+//                .bodyToFlux(Object.class)
+//                .subscribe(new BaseSubscriber<Object>() {
+//
+//                    Subscription subscription;
+//                    AtomicInteger ai = new AtomicInteger();
+//
+//                    @Override
+//                    protected void hookOnSubscribe(Subscription subscription) {
+////                        super.hookOnSubscribe(subscription);
+//                        this.subscription = subscription;
+//                        subscription.request(100);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnNext(Object value) {
+//                        System.out.println();
+//                    }
+//
+//                    @Override
+//                    protected void hookOnError(Throwable throwable) {
+//                        //super.hookOnError(throwable);
+//                        System.out.println();
+//                    }
+//                });
+
+
+//        Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
+//                .flatMap(value -> {
+//                    SavePaymentDto savePaymentDto = new SavePaymentDto();
+//                    PaymentResponseDto paymentResponseDto = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(value.getPaymentRequest());
+//                    savePaymentDto.setTrusted(true);
+//                    savePaymentDto.setPaymentResponseDto(paymentResponseDto);
+//                    SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
+//                    savePaymentDto.setSavePaymentRequestDto(savePaymentRequestDto);
+//                    return Mono.just(savePaymentDto);
+//                })
+//                .flatMap(x ->
+//                        Mono.just(x.getSavePaymentRequestDto()));
+
+
+//        WebClient
+//                .create("http://localhost:8082/payment/save")
+//                .post()
+//                .body(savePaymentFlux, Flux.class)
+//                .retrieve()
+//                .bodyToFlux(Object.class)
+//                .subscribe(new BaseSubscriber<Object>() {
+//
+//                    Subscription subscription;
+//                    AtomicInteger ai = new AtomicInteger();
+//
+//                    @Override
+//                    protected void hookOnSubscribe(Subscription subscription) {
+////                        super.hookOnSubscribe(subscription);
+//                        this.subscription = subscription;
+//                        subscription.request(100);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnNext(Object value) {
+//                        System.out.println();
+////                        super.hookOnNext(value);
+////                        if (ai.incrementAndGet() == 100) {
+////                            ai.set(0);
+////                            subscription.request(100);
+////                        }
+////                        System.out.println(value);
+//                    }
+//
+//                    @Override
+//                    protected void hookOnComplete() {
+////                        super.hookOnComplete();
+//                    }
+//
+//                    @Override
+//                    protected void hookOnError(Throwable throwable) {
+//                        //super.hookOnError(throwable);
+//                    }
+//                });
 
         return Mono.empty();
     }
@@ -361,7 +399,6 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 //                    }
 //                });
 //    }
-
 
 
 //    private void getLastPaymentFromClientService(List<ConsumeMessage> payments) {
