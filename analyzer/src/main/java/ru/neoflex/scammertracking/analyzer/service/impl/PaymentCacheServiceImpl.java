@@ -6,6 +6,7 @@ import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
@@ -20,7 +21,7 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
     private final SourceMapperImplementation sourceMapper;
 
     @Override
-    public void saveIfAbsent(SavePaymentRequestDto savePaymentRequest) {
+    public void saveIfAbsent(SavePaymentResponseDto savePaymentRequest) {
         log.debug("saveIfAbsent. savePaymentRequest={}", savePaymentRequest);
 
         paymentCacheRepository
@@ -52,7 +53,7 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                         super.hookOnComplete();
                         log.info("hookOnComplete. Complete getting cache payment");
                         if (payment == null) {
-                            PaymentEntity paymentEntity = sourceMapper.sourceFromSavePaymentRequestDtoToPaymentEntity(savePaymentRequest);
+                            PaymentEntity paymentEntity = sourceMapper.sourceFromSavePaymentResponseDtoToPaymentEntity(savePaymentRequest);
                             paymentCacheRepository
                                     .save(paymentEntity)
                                     .doOnError(err -> {

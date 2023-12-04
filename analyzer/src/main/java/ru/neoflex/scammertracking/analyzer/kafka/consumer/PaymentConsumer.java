@@ -42,14 +42,14 @@ public class PaymentConsumer {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Scheduled(fixedRate = 400)
+    @Scheduled(fixedRate = 500)
     public Mono<Void> pollMessages() {
         log.info("Input schedulling pollMessages");
 
         List<PaymentRequestDto> consumeMessages = new ArrayList<>();
 
         Mono.fromRunnable(() -> {
-                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(400));
+                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
                     byte[] paymentRequestBytes = null;
                     String key = null;
                     try {

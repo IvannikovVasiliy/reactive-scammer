@@ -10,14 +10,13 @@ import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.AggregateLastPaymentDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.EditPaymentRequestDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
+import ru.neoflex.scammertracking.paymentdb.map.SourceMapper;
+import ru.neoflex.scammertracking.paymentdb.map.impl.SourceMapperImplementation;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 import ru.neoflex.scammertracking.paymentdb.utils.Constants;
@@ -34,6 +33,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ModelMapper modelMapper;
+    private final SourceMapperImplementation sourceMapper;
 
     @Override
     public Flux<AggregateLastPaymentDto> getLastPayment(Flux<AggregateLastPaymentDto> paymentRequests) {
@@ -128,7 +128,7 @@ public class PaymentServiceImpl implements PaymentService {
 //        }
 
     @Override
-    public Flux<String> savePayment(Flux<SavePaymentRequestDto> payment) {
+    public Flux<SavePaymentResponseDto> savePayment(Flux<SavePaymentRequestDto> payment) {
 //            log.info("received. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
 //                    payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
 
@@ -161,7 +161,10 @@ public class PaymentServiceImpl implements PaymentService {
                                             })
                             )
                             .subscribe();
-                    return Mono.just("ok");
+
+                    SavePaymentResponseDto savePaymentResponse = sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity);
+
+                    return Mono.just(savePaymentResponse);
                 });
     }
 

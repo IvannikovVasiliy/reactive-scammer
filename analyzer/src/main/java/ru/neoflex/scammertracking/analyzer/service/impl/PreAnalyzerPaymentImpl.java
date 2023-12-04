@@ -43,7 +43,10 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
         Flux<AggregateLastPaymentDto> paymentsFlux = consumeMessages
                 .flatMap(paymentRequest -> {
 
-                    preAnalyze(paymentRequest);
+                    boolean isTrusted = preAnalyze(paymentRequest);
+                    if (!isTrusted) {
+                        throw new RuntimeException(String.format("Payment with id=%d is failed in a stage of pre-analyze", paymentRequest.getId()));
+                    }
 
                     LastPaymentResponseDto lastPaymentResponseDto = new LastPaymentResponseDto();
                     AggregateLastPaymentDto analyzeModel = new AggregateLastPaymentDto();
@@ -60,14 +63,15 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
                     return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
 
                 })
-                .onErrorResume(err -> Mono.empty());
+                .onErrorResume(err ->
+                        Mono.empty());
 
         lastPaymentService.process(paymentsFlux);
 
         return Mono.empty();
     }
 
-    private void preAnalyze(PaymentRequestDto paymentRequest) {
+    private boolean preAnalyze(PaymentRequestDto paymentRequest) {
         PaymentResponseDto paymentResult =
                 sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
         boolean isPreCheckSuspicious = checkRequest.preCheckSuspicious(paymentRequest);
@@ -84,7 +88,9 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
             } finally {
                 paymentProducer.sendSuspiciousMessage(String.valueOf(key), paymentResultBytes);
             }
+            return false;
         }
+        return true;
     }
 //        for (var consumeMessage : consumeMessages) {
 //            String key = consumeMessage.getKey();

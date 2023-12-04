@@ -43,7 +43,7 @@ public class PaymentController {
 
     @PostMapping(value = "/save", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.CREATED)
-    public Flux<Object> savePayment(/*@Valid*/ @RequestBody Flux<SavePaymentRequestDto> payment) {
+    public Flux<SavePaymentResponseDto> savePayment(/*@Valid*/ @RequestBody Flux<SavePaymentRequestDto> payment) {
 //        payment.subscribe(new BaseSubscriber<SavePaymentRequestDto>() {
 //            @Override
 //            protected void hookOnSubscribe(Subscription subscription) {
@@ -66,7 +66,7 @@ public class PaymentController {
 //            }
 //        });
 
-        Flux<String> saveResponse = paymentService.savePayment(payment);
+        Flux<SavePaymentResponseDto> saveResponse = paymentService.savePayment(payment);
 
         return saveResponse.flatMap(val -> {
             return Mono.just(val);

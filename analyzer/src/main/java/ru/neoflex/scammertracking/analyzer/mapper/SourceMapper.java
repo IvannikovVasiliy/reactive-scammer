@@ -1,10 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.mapper;
 
 import org.mapstruct.Mapper;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.*;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 
 @Mapper
@@ -14,4 +11,5 @@ public interface SourceMapper {
     SavePaymentRequestDto sourceFromPaymentRequestDtoToSavePaymentRequestDto(PaymentRequestDto paymentRequestDto);
     PaymentEntity sourceFromSavePaymentRequestDtoToPaymentEntity(SavePaymentRequestDto savePaymentRequestDto);
     PaymentResponseDto sourceFromLastPaymentResponseDtoToPaymentResponseDto(LastPaymentResponseDto lastPaymentResponseDto);
+    PaymentEntity sourceFromSavePaymentResponseDtoToPaymentEntity(SavePaymentResponseDto savePaymentResponseDto);
 }

@@ -1,10 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.mapper;
 
 import org.springframework.stereotype.Component;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.*;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.domain.model.Coordinates;
 
@@ -99,5 +96,21 @@ public class SourceMapperImplementation {
         paymentResponseDto.setDate( lastPaymentResponseDto.getDate() );
 
         return paymentResponseDto;
+    }
+
+    public PaymentEntity sourceFromSavePaymentResponseDtoToPaymentEntity(SavePaymentResponseDto savePaymentResponseDto) {
+        if ( savePaymentResponseDto == null ) {
+            return null;
+        }
+
+        PaymentEntity paymentEntity = new PaymentEntity();
+
+        paymentEntity.setPayerCardNumber( savePaymentResponseDto.getPayerCardNumber() );
+        paymentEntity.setReceiverCardNumber( savePaymentResponseDto.getReceiverCardNumber() );
+        paymentEntity.setIdPayment(savePaymentResponseDto.getId());
+        paymentEntity.setLatitude(savePaymentResponseDto.getCoordinates().getLatitude());
+        paymentEntity.setLongitude(savePaymentResponseDto.getCoordinates().getLongitude());
+
+        return paymentEntity;
     }
 }

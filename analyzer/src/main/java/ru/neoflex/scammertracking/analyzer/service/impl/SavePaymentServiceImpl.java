@@ -11,8 +11,10 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
+import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.service.PaymentCacheService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
@@ -33,8 +35,8 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                 .post()
                 .body(savePaymentDtoFlux, Flux.class)
                 .retrieve()
-                .bodyToFlux(Object.class)
-                .subscribe(new BaseSubscriber<Object>() {
+                .bodyToFlux(SavePaymentResponseDto.class)
+                .subscribe(new BaseSubscriber<SavePaymentResponseDto>() {
 
                     @Override
                     protected void hookOnSubscribe(Subscription subscription) {
@@ -42,8 +44,9 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                     }
 
                     @Override
-                    protected void hookOnNext(Object value) {
+                    protected void hookOnNext(SavePaymentResponseDto value) {
                         super.hookOnNext(value);
+                        paymentCacheService.saveIfAbsent(value);
                     }
 
                     @Override
