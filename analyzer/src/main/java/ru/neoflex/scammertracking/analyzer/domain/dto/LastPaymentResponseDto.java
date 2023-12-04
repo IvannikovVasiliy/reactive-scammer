@@ -1,7 +1,11 @@
 package ru.neoflex.scammertracking.analyzer.domain.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Builder;
 import ru.neoflex.scammertracking.analyzer.domain.model.Coordinates;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeDeserializer;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 
 import java.time.LocalDateTime;
 
@@ -57,10 +61,12 @@ public class LastPaymentResponseDto {
         this.coordinates = coordinates;
     }
 
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
     public LocalDateTime getDate() {
         return date;
     }
 
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     public void setDate(LocalDateTime date) {
         this.date = date;
     }

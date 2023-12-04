@@ -48,7 +48,7 @@ public class PaymentConsumer {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Scheduled(fixedRate = 500)
-    public void pollMessages() {
+    public Mono<Void> pollMessages() {
         log.info("Input schedulling pollMessages");
 
         ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
@@ -71,5 +71,7 @@ public class PaymentConsumer {
 
         Flux<PaymentRequestDto> flux = Flux.fromIterable(consumeMessages);
         preAnalyzerPayment.preAnalyzeConsumeMessage(flux);
+
+        return Mono.empty();
     }
 }

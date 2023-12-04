@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
@@ -18,8 +15,6 @@ import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -38,57 +33,51 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     public Mono<Void> process(Flux<AggregateLastPaymentDto> paymentRequests) {
         log.info("process. received paymentRequests");
 
-        Flux<AggregateLastPaymentDto> f = clientService
-                .getLastPayment(paymentRequests);
+        Flux<AggregateLastPaymentDto> fluxNonCache = paymentRequests.filter(x -> {
+            if (x.getPaymentResponse() == null) {
+                return true;
+            }
+            return false;
+        });
+        Flux<AggregateLastPaymentDto> fluxCache = paymentRequests.filter(x -> {
+            if (x.getPaymentResponse() != null) {
+                return true;
+            }
+            return false;
+        });
 
-        checkLastPaymentAsync(f);
+        Flux<AggregateLastPaymentDto> f = clientService
+                .getLastPayment(fluxNonCache);
+
+        checkLastPaymentAsync(fluxCache);
+        checkLastPaymentAsync(fluxNonCache);
         return Mono.empty();
     }
 
 
     private Mono<Void> checkLastPaymentAsync(Flux<AggregateLastPaymentDto> aggregatePaymentsFlux) {
-        Flux<SavePaymentDto> savePaymentFlux = aggregatePaymentsFlux
+        Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
                 .map(value -> {
-                    SavePaymentDto savePaymentDto = new SavePaymentDto();
+                    boolean isTrusted;
+                    if (value.getPaymentResponse() == null) {
+                        isTrusted = true;
+                    } else {
+                        isTrusted = geoAnalyzer.checkPayment(value.getPaymentResponse(), value.getPaymentRequest());
+                        if (isTrusted == false) {
+                            throw new RuntimeException("Payment with id={} is suspicious, because it is failed in geo-analyzing-stage");
+                        }
+                    }
+
                     PaymentResponseDto paymentResponseDto = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(value.getPaymentRequest());
-                    savePaymentDto.setTrusted(true);
-                    savePaymentDto.setPaymentResponseDto(paymentResponseDto);
                     SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
-                    savePaymentDto.setSavePaymentRequestDto(savePaymentRequestDto);
+                    SavePaymentDto savePaymentDto = new SavePaymentDto(isTrusted, savePaymentRequestDto, paymentResponseDto);
                     return savePaymentDto;
-                });
+                })
+                .onErrorResume(err ->
+                        Mono.empty())
+                .map(val -> val.getSavePaymentRequestDto());
 
         savePaymentService.savePayment(savePaymentFlux);
-//        WebClient
-//                .create("http://localhost:8082/payment/save")
-//                .post()
-//                .body((Object) savePaymentFlux.map(x ->
-//                        x.getSavePaymentRequestDto()), Flux.class)
-//                .retrieve()
-//                .bodyToFlux(Object.class)
-//                .subscribe(new BaseSubscriber<Object>() {
-//
-//                    Subscription subscription;
-//                    AtomicInteger ai = new AtomicInteger();
-//
-//                    @Override
-//                    protected void hookOnSubscribe(Subscription subscription) {
-////                        super.hookOnSubscribe(subscription);
-//                        this.subscription = subscription;
-//                        subscription.request(100);
-//                    }
-//
-//                    @Override
-//                    protected void hookOnNext(Object value) {
-//                        System.out.println();
-//                    }
-//
-//                    @Override
-//                    protected void hookOnError(Throwable throwable) {
-//                        //super.hookOnError(throwable);
-//                        System.out.println();
-//                    }
-//                });
 
 
 //        Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux

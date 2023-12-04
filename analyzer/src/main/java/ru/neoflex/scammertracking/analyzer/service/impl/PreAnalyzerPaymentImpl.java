@@ -15,12 +15,13 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
-import ru.neoflex.scammertracking.analyzer.domain.model.AnalyzeModel;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
+
+import java.time.Duration;
 
 @Service
 @Slf4j
@@ -91,7 +92,7 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
                                     }
                                 });
 
-                        return Mono.just(analyzeModel);
+                        return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
                     }
                 })
                 .onErrorContinue((throwable, o) -> {

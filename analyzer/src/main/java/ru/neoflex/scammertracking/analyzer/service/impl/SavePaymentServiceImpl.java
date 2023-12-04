@@ -27,13 +27,11 @@ public class SavePaymentServiceImpl implements SavePaymentService {
     private final PaymentCacheService paymentCacheService;
     private final ObjectMapper objectMapper;
 
-    public Mono<Void> savePayment(Flux<SavePaymentDto> savePaymentDtoFlux) {
+    public Mono<Void> savePayment(Flux<SavePaymentRequestDto> savePaymentDtoFlux) {
         WebClient
                 .create("http://localhost:8082/payment/save")
                 .post()
-                .body((Object) savePaymentDtoFlux
-                        .flatMap(val ->
-                                Mono.just(val.getSavePaymentRequestDto())), Flux.class)
+                .body(savePaymentDtoFlux, Flux.class)
                 .retrieve()
                 .bodyToFlux(Object.class)
                 .subscribe(new BaseSubscriber<Object>() {

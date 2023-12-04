@@ -46,7 +46,8 @@ public class ClientServiceImpl implements ClientService {
                         if ("paymentRequest".equals(k)) {
                             PaymentRequestDto paymentRequest = new ObjectMapper().convertValue(v, PaymentRequestDto.class);
                             aggregateModel.setPaymentRequest(paymentRequest);
-                        } else if ("paymentResponse".equals(k)) {
+                        }
+                        if ("paymentResponse".equals(k)) {
                             LastPaymentResponseDto paymentResponseDto = new ObjectMapper().convertValue(v, LastPaymentResponseDto.class);
                             aggregateModel.setPaymentResponse(paymentResponseDto);
                         }

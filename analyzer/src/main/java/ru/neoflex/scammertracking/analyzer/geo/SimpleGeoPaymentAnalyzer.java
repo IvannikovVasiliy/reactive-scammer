@@ -13,9 +13,6 @@ import java.time.LocalDateTime;
 public class SimpleGeoPaymentAnalyzer implements GeoAnalyzer {
 
     public boolean checkPayment(LastPaymentResponseDto lastPayment, PaymentRequestDto currentPayment) {
-        log.info("Received for check payment. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }.\n currentPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date={} }",
-                lastPayment.getId(), lastPayment.getPayerCardNumber(), lastPayment.getReceiverCardNumber(), lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude(), lastPayment.getDate(), currentPayment.getId(), currentPayment.getPayerCardNumber(), currentPayment.getReceiverCardNumber(), currentPayment.getCoordinates().getLatitude(), currentPayment.getCoordinates().getLongitude(), currentPayment.getDate());
-
         LocalDateTime lastPaymentDate = lastPayment.getDate();
         LocalDateTime currentPaymentDate = currentPayment.getDate();
         GeoPoint lastGeoPoint = new GeoPoint(lastPayment.getCoordinates().getLatitude(), lastPayment.getCoordinates().getLongitude());
