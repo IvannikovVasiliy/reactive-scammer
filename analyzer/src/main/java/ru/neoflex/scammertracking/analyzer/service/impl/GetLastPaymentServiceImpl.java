@@ -50,7 +50,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                 .getLastPayment(fluxNonCache);
 
         checkLastPaymentAsync(fluxCache);
-        checkLastPaymentAsync(fluxNonCache);
+        checkLastPaymentAsync(f);
         return Mono.empty();
     }
 

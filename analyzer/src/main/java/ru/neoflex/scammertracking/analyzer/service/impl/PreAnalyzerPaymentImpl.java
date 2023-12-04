@@ -35,72 +35,56 @@ public class PreAnalyzerPaymentImpl implements PreAnalyzerPayment {
     private final ObjectMapper objectMapper;
     private final PaymentCacheRepository paymentCacheRepository;
 
+
     @Override
     public Mono<Void> preAnalyzeConsumeMessage(Flux<PaymentRequestDto> consumeMessages) {
         log.info("Input preAnalyzeConsumeMessage. received list of consumeMessages");
 
         Flux<AggregateLastPaymentDto> paymentsFlux = consumeMessages
                 .flatMap(paymentRequest -> {
-                    {
-                        PaymentResponseDto paymentResult =
-                                sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
-                        boolean isPreCheckSuspicious = checkRequest.preCheckSuspicious(paymentRequest);
-                        if (isPreCheckSuspicious) {
-                            long key = paymentRequest.getId();
-                            log.error("response. Sent message with key={} in suspicious-topic", key);
-                            paymentResult.setTrusted(false);
-                            byte[] paymentResultBytes = new byte[0];
-                            try {
-                                paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
-                            } catch (JsonProcessingException e) {
-                                log.error("Unable to parse paymentResult into bytes");
-                                throw new RuntimeException(e.getMessage());
-                            } finally {
-                                paymentProducer.sendSuspiciousMessage(String.valueOf(key), paymentResultBytes);
-                            }
-                        }
-                    }
 
-                    {
-                        LastPaymentResponseDto lastPaymentResponseDto = new LastPaymentResponseDto();
-                        AggregateLastPaymentDto analyzeModel = new AggregateLastPaymentDto();
-                        analyzeModel.setPaymentRequest(paymentRequest);
+                    preAnalyze(paymentRequest);
 
-                        paymentCacheRepository
-                                .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
-                                .subscribe(new BaseSubscriber<>() {
+                    LastPaymentResponseDto lastPaymentResponseDto = new LastPaymentResponseDto();
+                    AggregateLastPaymentDto analyzeModel = new AggregateLastPaymentDto();
+                    analyzeModel.setPaymentRequest(paymentRequest);
 
-                                    Subscription subscription;
-                                    boolean isPaymentMonoIsEmpty = true;
+                    paymentCacheRepository
+                            .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
+                            .doOnNext(payment -> {
+                                LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
+                                analyzeModel.setPaymentResponse(lastPaymentResponse);
+                            })
+                            .subscribe();
 
-                                    @Override
-                                    protected void hookOnSubscribe(Subscription subscription) {
-                                        super.hookOnSubscribe(subscription);
-                                        this.subscription = subscription;
-                                        subscription.request(1);
-                                    }
+                    return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
 
-                                    @Override
-                                    protected void hookOnNext(PaymentEntity payment) {
-                                        super.hookOnNext(payment);
-                                        log.info("hookOnNext. payment={payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={}}",
-                                                payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
-                                        isPaymentMonoIsEmpty = false;
-                                        LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
-                                        analyzeModel.setPaymentResponse(lastPaymentResponse);
-                                        subscription.request(1);
-                                    }
-                                });
-
-                        return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
-                    }
                 })
-                .onErrorContinue((throwable, o) -> {
-                });
+                .onErrorResume(err -> Mono.empty());
 
         lastPaymentService.process(paymentsFlux);
 
         return Mono.empty();
+    }
+
+    private void preAnalyze(PaymentRequestDto paymentRequest) {
+        PaymentResponseDto paymentResult =
+                sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
+        boolean isPreCheckSuspicious = checkRequest.preCheckSuspicious(paymentRequest);
+        if (isPreCheckSuspicious) {
+            long key = paymentRequest.getId();
+            log.error("response. Sent message with key={} in suspicious-topic", key);
+            paymentResult.setTrusted(false);
+            byte[] paymentResultBytes = new byte[0];
+            try {
+                paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
+            } catch (JsonProcessingException e) {
+                log.error("Unable to parse paymentResult into bytes");
+                throw new RuntimeException(e.getMessage());
+            } finally {
+                paymentProducer.sendSuspiciousMessage(String.valueOf(key), paymentResultBytes);
+            }
+        }
     }
 //        for (var consumeMessage : consumeMessages) {
 //            String key = consumeMessage.getKey();
