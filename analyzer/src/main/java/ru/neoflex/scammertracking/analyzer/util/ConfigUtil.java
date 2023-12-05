@@ -10,9 +10,6 @@ public class ConfigUtil {
     public static String getLastPaymentEndpoint() {
         return config.getString("lastPayment");
     }
-    public static String savePaymentEndpoint() {
-        return config.getString("savePayment");
-    }
     public static Integer getRedisTimeout() {
         return config.getInt("redisTemplate");
     }

@@ -41,6 +41,8 @@ public class KafkaConsumerConfig {
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // !!!!!!!!!!!!
+//        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Arrays.asList(paymentTopic));

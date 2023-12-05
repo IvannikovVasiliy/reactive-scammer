@@ -43,7 +43,7 @@ public class PaymentConsumer {
     private final ObjectMapper objectMapper;
 
     @Scheduled(fixedRate = 500)
-    public void pollMessages() {
+    public Mono<Void> pollMessages() {
         log.info("Input schedulling pollMessages");
 
         List<PaymentRequestDto> consumeMessages = new ArrayList<>();
@@ -73,5 +73,7 @@ public class PaymentConsumer {
                     getCachedPaymentRouter.preAnalyzeConsumeMessage(flux);
                 })
                 .subscribe();
+
+        return Mono.empty();
     }
 }
