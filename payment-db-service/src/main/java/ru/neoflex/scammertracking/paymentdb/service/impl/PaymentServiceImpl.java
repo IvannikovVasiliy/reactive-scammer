@@ -164,7 +164,7 @@ public class PaymentServiceImpl implements PaymentService {
 
                     SavePaymentResponseDto savePaymentResponse = sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity);
 
-                    return Mono.just(savePaymentResponse);
+                    return Mono.error(new RuntimeException("err"));
                 });
     }
 

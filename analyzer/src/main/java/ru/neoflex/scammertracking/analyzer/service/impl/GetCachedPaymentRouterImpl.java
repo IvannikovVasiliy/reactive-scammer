@@ -2,7 +2,6 @@ package ru.neoflex.scammertracking.analyzer.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -14,8 +13,9 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
-import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
+import ru.neoflex.scammertracking.analyzer.service.PaymentCacheService;
 
 import java.time.Duration;
 
@@ -28,6 +28,7 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
     private final SourceMapperImplementation sourceMapper;
     private final PaymentCacheRepository paymentCacheRepository;
     private final PreAnalyzer preAnalyzer;
+    private final PaymentCacheService paymentCacheService;
 
     @Override
     public Mono<Void> preAnalyzeConsumeMessage(Flux<PaymentRequestDto> consumeMessages) {
@@ -49,12 +50,7 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                                 LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
                                 analyzeModel.setPaymentResponse(lastPaymentResponse);
                             })
-                            .subscribe(new BaseSubscriber<PaymentEntity>() {
-                                @Override
-                                protected void hookOnError(Throwable throwable) {
-                                    super.hookOnError(throwable);
-                                }
-                            });
+                            .subscribe();
 
                     return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
 

@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
-import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
+import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -42,16 +42,15 @@ public class PaymentConsumer {
     private final Consumer<String, byte[]> consumer;
     private final ObjectMapper objectMapper;
 
-    @Scheduled(fixedRate = 500)
+    @Scheduled(fixedRate = Constants.SCHEDULING_INTERVAL)
     public Mono<Void> pollMessages() {
-        log.info("Input schedulling pollMessages");
+//        log.info("Input schedulling pollMessages");
 
         List<PaymentRequestDto> consumeMessages = new ArrayList<>();
-
         Mono
                 .fromRunnable(() -> {
-                    final long consumerPollDurationMillis = ConfigUtil.getConsumerPollDurationMillis();
-                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
+                    ConsumerRecords<String, byte[]> records =
+                            consumer.poll(Duration.ofMillis(Constants.DURATION_POLL_MILLIS));
                     byte[] paymentRequestBytes = null;
                     String key = null;
                     try {

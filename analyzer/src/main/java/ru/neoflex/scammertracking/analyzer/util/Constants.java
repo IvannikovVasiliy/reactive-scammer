@@ -6,4 +6,7 @@ public class Constants {
     public static final int BAD_REQUEST = 400;
     public static final int RETRY_COUNT = 3;
     public static final int RETRY_INTERVAL = 3;
+
+    public static final long SCHEDULING_INTERVAL = 500;
+    public static final long DURATION_POLL_MILLIS = 500;
 }
