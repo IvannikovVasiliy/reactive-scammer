@@ -35,6 +35,7 @@ public class RedisConfig {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
 //                .commandTimeout(Duration.ofSeconds(REDIS_TIMEOUT))
 //                .commandTimeout(Duration.ofMillis(1))
+                .commandTimeout(Duration.ZERO)
                 .shutdownTimeout(Duration.ZERO)
                 .build();
 

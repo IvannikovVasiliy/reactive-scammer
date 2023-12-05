@@ -51,7 +51,7 @@ public class PaymentConsumer {
         Mono
                 .fromRunnable(() -> {
                     final long consumerPollDurationMillis = ConfigUtil.getConsumerPollDurationMillis();
-                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(consumerPollDurationMillis));
+                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
                     byte[] paymentRequestBytes = null;
                     String key = null;
                     try {

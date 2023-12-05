@@ -46,7 +46,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                     @Override
                     protected void hookOnNext(SavePaymentResponseDto value) {
                         super.hookOnNext(value);
-//                        paymentCacheService.saveIfAbsent(value);
+                        paymentCacheService.saveIfAbsent(value);
                     }
 
                     @Override

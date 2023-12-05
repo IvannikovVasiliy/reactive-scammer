@@ -45,13 +45,18 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
 
                     paymentCacheRepository
                             .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
-//                            .doOnNext(payment -> {
-//                                LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
-//                                analyzeModel.setPaymentResponse(lastPaymentResponse);
-//                            })
-                            .subscribe();
+                            .doOnNext(payment -> {
+                                LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
+                                analyzeModel.setPaymentResponse(lastPaymentResponse);
+                            })
+                            .subscribe(new BaseSubscriber<PaymentEntity>() {
+                                @Override
+                                protected void hookOnError(Throwable throwable) {
+                                    super.hookOnError(throwable);
+                                }
+                            });
 
-                    return Mono.just(analyzeModel)/*.delayElement(Duration.ofMillis(5))*/;
+                    return Mono.just(analyzeModel).delayElement(Duration.ofMillis(5));
 
                 })
                 .onErrorResume(err ->
