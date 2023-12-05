@@ -42,4 +42,8 @@ public class ConfigUtil {
     public static Integer getCountReplicasTopicBackoffPayments() {
         return config.getInt("countReplicasTopicBackoffPayments");
     }
+
+    public static Long getConsumerPollDurationMillis() {
+        return config.getLong("consumerPollDurationMillis");
+    }
 }

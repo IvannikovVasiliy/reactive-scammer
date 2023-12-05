@@ -12,7 +12,6 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.*;
 import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
-import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 
@@ -21,7 +20,6 @@ import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
 @Slf4j
 public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
-    private final PaymentCacheRepository paymentCacheRepository;
     private final SourceMapperImplementation sourceMapper;
     private final ClientService clientService;
     private final GeoAnalyzer geoAnalyzer;
@@ -30,17 +28,15 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> process(Flux<AggregateLastPaymentDto> paymentRequests) {
-        log.info("process. received paymentRequests");
-
-        Flux<AggregateLastPaymentDto> fluxNonCache = paymentRequests.filter(x -> {
-            if (x.getPaymentResponse() == null) {
+    public Mono<Void> process(Flux<AggregateLastPaymentDto> paymentRequestsFlux) {
+        Flux<AggregateLastPaymentDto> fluxNonCache = paymentRequestsFlux.filter(val -> {
+            if (val.getPaymentResponse() == null) {
                 return true;
             }
             return false;
         });
-        Flux<AggregateLastPaymentDto> fluxCache = paymentRequests.filter(x -> {
-            if (x.getPaymentResponse() != null) {
+        Flux<AggregateLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
+            if (val.getPaymentResponse() != null) {
                 return true;
             }
             return false;
@@ -54,10 +50,9 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
         return Mono.empty();
     }
 
-
     private Mono<Void> checkLastPaymentAsync(Flux<AggregateLastPaymentDto> aggregatePaymentsFlux) {
         Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
-                .map(value -> {
+                .flatMap(value -> {
                     boolean isTrusted;
                     if (value.getPaymentResponse() == null) {
                         isTrusted = true;
@@ -71,11 +66,11 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                     PaymentResponseDto paymentResponseDto = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(value.getPaymentRequest());
                     SavePaymentRequestDto savePaymentRequestDto = sourceMapper.sourceFromPaymentRequestDtoToSavePaymentRequestDto(value.getPaymentRequest());
                     SavePaymentDto savePaymentDto = new SavePaymentDto(isTrusted, savePaymentRequestDto, paymentResponseDto);
-                    return savePaymentDto;
+                    return Mono.just(savePaymentDto);
                 })
                 .onErrorResume(err ->
                         Mono.empty())
-                .map(val -> val.getSavePaymentRequestDto());
+                .flatMap(val -> Mono.just(val.getSavePaymentRequestDto()));
 
         savePaymentService.savePayment(savePaymentFlux);
 

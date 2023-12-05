@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
+import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,7 @@ class PaymentConsumerTest {
     @InjectMocks
     private PaymentConsumer paymentConsumer;
     @Mock
-    private PreAnalyzerPayment preAnalyzerPayment;
+    private GetCachedPaymentRouter getCachedPaymentRouter;
     @Mock
     private PaymentProducer paymentProducer;
     @Mock

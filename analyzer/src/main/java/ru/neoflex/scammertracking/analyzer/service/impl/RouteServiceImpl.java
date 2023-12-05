@@ -2,19 +2,18 @@ package ru.neoflex.scammertracking.analyzer.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
-import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
+import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
 import ru.neoflex.scammertracking.analyzer.service.RouteService;
 
 @Service
 @RequiredArgsConstructor
 public class RouteServiceImpl implements RouteService {
 
-    private final PreAnalyzerPayment preAnalyzerPayment;
+    private final GetCachedPaymentRouter getCachedPaymentRouter;
     private final GetLastPaymentService lastPaymentService;
 
     @Override

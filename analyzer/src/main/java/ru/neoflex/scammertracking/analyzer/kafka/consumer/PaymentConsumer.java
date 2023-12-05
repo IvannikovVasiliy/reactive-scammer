@@ -9,13 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.service.PreAnalyzerPayment;
-import ru.neoflex.scammertracking.analyzer.service.RouteService;
+import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
+import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -28,35 +27,39 @@ import java.util.List;
 public class PaymentConsumer {
 
     @Autowired
-    public PaymentConsumer(PreAnalyzerPayment preAnalyzerPayment, PaymentProducer paymentProducer, Consumer consumer, RouteService routeService) {
-        this.preAnalyzerPayment = preAnalyzerPayment;
+    public PaymentConsumer(GetCachedPaymentRouter getCachedPaymentRouter,
+                           PaymentProducer paymentProducer,
+                           Consumer<String, byte[]> consumer,
+                           ObjectMapper objectMapper) {
+        this.getCachedPaymentRouter = getCachedPaymentRouter;
         this.paymentProducer = paymentProducer;
         this.consumer = consumer;
-        this.routeService = routeService;
+        this.objectMapper = objectMapper;
     }
 
-    private final PreAnalyzerPayment preAnalyzerPayment;
+    private final GetCachedPaymentRouter getCachedPaymentRouter;
     private final PaymentProducer paymentProducer;
     private final Consumer<String, byte[]> consumer;
-    private final RouteService routeService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Scheduled(fixedRate = 500)
-    public Mono<Void> pollMessages() {
+    public void pollMessages() {
         log.info("Input schedulling pollMessages");
 
         List<PaymentRequestDto> consumeMessages = new ArrayList<>();
 
-        Mono.fromRunnable(() -> {
-                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
+        Mono
+                .fromRunnable(() -> {
+                    final long consumerPollDurationMillis = ConfigUtil.getConsumerPollDurationMillis();
+                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(consumerPollDurationMillis));
                     byte[] paymentRequestBytes = null;
                     String key = null;
                     try {
                         for (ConsumerRecord<String, byte[]> record : records) {
                             paymentRequestBytes = record.value();
                             key = record.key();
-                            PaymentRequestDto paymentRequest = objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
+                            PaymentRequestDto paymentRequest =
+                                    objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
                             consumeMessages.add(paymentRequest);
                             log.info(paymentRequest.toString());
                         }
@@ -65,15 +68,10 @@ public class PaymentConsumer {
                         paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
                     }
                 })
-                .subscribe(new BaseSubscriber<Object>() {
-                    @Override
-                    protected void hookOnComplete() {
-                        super.hookOnComplete();
-                        Flux<PaymentRequestDto> flux = Flux.fromIterable(consumeMessages);
-                        preAnalyzerPayment.preAnalyzeConsumeMessage(flux);
-                    }
-                });
-
-        return Mono.empty();
+                .doOnSuccess(val -> {
+                    Flux<PaymentRequestDto> flux = Flux.fromIterable(consumeMessages);
+                    getCachedPaymentRouter.preAnalyzeConsumeMessage(flux);
+                })
+                .subscribe();
     }
 }

@@ -1,7 +1,6 @@
 package ru.neoflex.scammertracking.analyzer.check.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,15 +21,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class CheckRequestImplTest {
+class RequestCheckerImplTest {
 
     @Autowired
-    public CheckRequestImplTest(CheckRequestImpl checkRequest) {
+    public RequestCheckerImplTest(RequestCheckerImpl checkRequest) {
         this.checkRequest = checkRequest;
         this.objectMapper = new ObjectMapper();
     }
 
-    private final CheckRequestImpl checkRequest;
+    private final RequestCheckerImpl checkRequest;
     private final ObjectMapper objectMapper;
 
     @Test
