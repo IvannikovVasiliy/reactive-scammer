@@ -1,6 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.config;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,7 @@ public class KafkaProducerConfig {
     private String bootstrapAddress;
 
     @Bean
-    public ProducerFactory<String, PaymentResponseDto> producerFactory() {
+    public ProducerFactory<String, PaymentResponseDto> producerJsonFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -30,7 +31,21 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, PaymentResponseDto> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public KafkaTemplate<String, PaymentResponseDto> kafkaJsonTemplate() {
+        return new KafkaTemplate<>(producerJsonFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, byte[]> producerByteFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, byte[]> kafkaByteTemplate() {
+        return new KafkaTemplate<>(producerByteFactory());
     }
 }

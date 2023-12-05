@@ -1,10 +1,13 @@
 package ru.neoflex.scammertracking.analyzer.domain.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import ru.neoflex.scammertracking.analyzer.domain.model.Coordinates;
+import ru.neoflex.scammertracking.analyzer.serdes.LocalDateTimeSerializer;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class PaymentResponseDto {
+public class PaymentResponseDto implements Serializable {
 
     public PaymentResponseDto(long id, String payerCardNumber, String receiverCardNumber,
                               Coordinates coordinates, LocalDateTime date, Boolean trusted) {
@@ -30,10 +33,11 @@ public class PaymentResponseDto {
     public PaymentResponseDto() {
     }
 
-    private long id;
+    private Long id;
     private String payerCardNumber;
     private String receiverCardNumber;
     private Coordinates coordinates;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
     private LocalDateTime date;
     private Boolean trusted;
 

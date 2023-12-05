@@ -1,6 +1,8 @@
 package ru.neoflex.scammertracking.analyzer.domain.model;
 
-public class Coordinates {
+import java.io.Serializable;
+
+public class Coordinates implements Serializable {
     public Coordinates(float latitude, float longitude) {
         this.latitude = latitude;
         this.longitude = longitude;

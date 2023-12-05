@@ -3,11 +3,9 @@ package ru.neoflex.scammertracking.paymentdb.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.GetLastPaymentRequestDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.PaymentResponseDto;
-import ru.neoflex.scammertracking.paymentdb.domain.dto.SavePaymentRequestDto;
+import reactor.core.publisher.Mono;
+import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
 @RestController
@@ -18,47 +16,31 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/last-payment")
-    public PaymentResponseDto getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
-        PaymentResponseDto responseDto = paymentService.getLastPayment(payment.getCardNumber());
+    public Mono<PaymentResponseDto> getLastPaymentByPayerCardNumber(@Valid @RequestBody GetLastPaymentRequestDto payment) {
+        Mono<PaymentResponseDto> responseDto = paymentService.getLastPayment(payment.getCardNumber());
 
         return responseDto;
     }
 
     @PostMapping("/save")
     @ResponseStatus(value = HttpStatus.CREATED)
-    public String savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
-        paymentService.savePayment(payment);
+    public Mono<Void> savePayment(@Valid @RequestBody SavePaymentRequestDto payment) {
+        Mono<Void> saveResponse = paymentService.savePayment(payment);
 
-        return "The payment was saved";
+        return saveResponse;
     }
 
-    //    @Autowired
-//    public PaymentController(CommonPaymentService commonPaymentService) {
-//        this.commonPaymentService = commonPaymentService;
-//    }
-//
-//    private CommonPaymentService commonPaymentService;
+    @PutMapping
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public Mono<Void> putPayment(@Valid @RequestBody EditPaymentRequestDto editPaymentRequestDto) {
+        Mono<Void> putPaymentResponse = paymentService.putPayment(editPaymentRequestDto);
 
-//    @PostMapping("/last-payment")
-//    public PaymentResponseDto getLastPaymentByReceiverCardNumber(@RequestBody GetLastPaymentRequestDto payment) {
-//        PaymentResponseDto responseDto = commonPaymentService.getLastPayment(payment.getCardNumber());
-//
-//        return responseDto;
-//    }
-//
-//    @PostMapping
-//    @ResponseStatus(value = HttpStatus.CREATED)
-//    public String createPayment(@RequestBody CreatePaymentRequestDto paymentRequest) {
-//        commonPaymentService.insertPayments(paymentRequest.getIdCardNumber());
-//        String response = "The rows were created";
-//
-//        return response;
-//    }
-//
-//    @PutMapping
-//    public UpdatePaymentResponseDto updatePayment(@RequestBody UpdatePaymentRequestDto updatePaymentRequest) {
-//        UpdatePaymentResponseDto updateResponse = commonPaymentService.updatePayments(updatePaymentRequest);
-//
-//        return updateResponse;
-//    }
+        return putPaymentResponse;
+    }
+
+    @DeleteMapping
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public Mono<Void> deletePayment(@Valid @RequestBody DeletePaymentRequestDto deletePaymentRequestDto) {
+        return paymentService.deletePaymentById(deletePaymentRequestDto.getId());
+    }
 }

@@ -1,9 +1,13 @@
 package ru.neoflex.scammertracking.paymentdb.domain.entity;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
 import java.time.LocalDateTime;
 
+@Table(name = "payments")
 public class PaymentEntity {
-    public PaymentEntity(long id, String payerCardNumber, String receiverCardNumber, float latitude, float longitude, LocalDateTime date) {
+    public PaymentEntity(Long id, String payerCardNumber, String receiverCardNumber, float latitude, float longitude, LocalDateTime date) {
         this.id = id;
         this.payerCardNumber = payerCardNumber;
         this.receiverCardNumber = receiverCardNumber;
@@ -15,18 +19,19 @@ public class PaymentEntity {
     public PaymentEntity() {
     }
 
-    private long id;
+    @Id
+    private Long id;
     private String payerCardNumber;
     private String receiverCardNumber;
     private float latitude;
     private float longitude;
     private LocalDateTime date;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
