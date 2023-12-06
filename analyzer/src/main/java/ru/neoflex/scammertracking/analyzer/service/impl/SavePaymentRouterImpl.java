@@ -32,9 +32,9 @@ public class SavePaymentRouterImpl implements SavePaymentRouter {
                     @Override
                     protected void hookOnNext(SavePaymentResponseDto value) {
                         super.hookOnNext(value);
-                        if (!isRedisDropped.get()) {
-                            paymentCacheService.saveIfAbsent(value);
-                        }
+//                        if (!isRedisDropped.get()) {
+//                            paymentCacheService.saveIfAbsent(value);
+//                        }
                     }
 
                     @Override

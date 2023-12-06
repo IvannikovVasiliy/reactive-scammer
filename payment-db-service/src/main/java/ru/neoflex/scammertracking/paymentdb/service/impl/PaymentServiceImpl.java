@@ -90,8 +90,8 @@ public class PaymentServiceImpl implements PaymentService {
                             });
 
 //                    return Mono.just(savePaymentResponse);
-                })
-                .delayElements(Duration.ofSeconds(1));
+                });
+                //.delayElements(Duration.ofSeconds(1));
     }
 
     @Override
