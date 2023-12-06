@@ -76,7 +76,6 @@ public class PaymentServiceImpl implements PaymentService {
 
                     return paymentRepository
                             .insert(paymentEntity)
-                            .then(Mono.defer(() -> Mono.just(sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity))))
                             .doOnError(error -> {
                                 if (error instanceof DuplicateKeyException) {
                                     String errorMessage = String.format("The payment with id=%s is already exist", p.getId());
@@ -87,7 +86,8 @@ public class PaymentServiceImpl implements PaymentService {
                                             p.getId(), p.getCoordinates(), p.getPayerCardNumber(), p.getCoordinates().getLatitude(), p.getCoordinates().getLongitude(), p.getDate());
                                     throw new RuntimeException(error);
                                 }
-                            });
+                            })
+                            .then(Mono.just(sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity)));
 
 //                    return Mono.just(savePaymentResponse);
                 });
