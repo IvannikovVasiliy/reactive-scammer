@@ -48,25 +48,45 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                     analyzeModel.setPaymentRequest(paymentRequest);
 
                     if (!isRedisDropped.get()) {
-                        paymentCacheRepository
+                        return paymentCacheRepository
                                 .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
                                 .doOnNext(payment -> {
                                     log.info("get last payment with id={} from cache", payment.getIdPayment());
                                     LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
                                     analyzeModel.setPaymentResponse(lastPaymentResponse);
                                 })
-                                .subscribeOn(Schedulers.newBoundedElastic(5, 10, "MyThreadGroup"))
-                                .subscribe(new BaseSubscriber<PaymentEntity>() {
-                                    @Override
-                                    protected void hookOnError(Throwable throwable) {
-                                        if (throwable instanceof RedisConnectionFailureException) {
-                                            isRedisDropped.set(true);
-                                        }
+                                .doOnError(throwable -> {
+                                    if (throwable instanceof RedisConnectionFailureException) {
+                                        isRedisDropped.set(true);
                                     }
-                                });
-                        return Mono
-                                .just(analyzeModel)
-                                .delayElement(Duration.ofMillis(Constants.DELAY_REDIS_RESPONSE_MILLIS));
+                                })
+                                .then(Mono.just(analyzeModel));
+
+
+
+
+
+//                                .flatMap(payment -> {
+//                                    LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
+//                                    analyzeModel.setPaymentResponse(lastPaymentResponse);
+//                                    return Mono.just(analyzeModel);
+//                                });
+
+
+
+
+                        //                                .subscribeOn(Schedulers.newBoundedElastic(5, 10, "MyThreadGroup"))
+//                                .subscribe(new BaseSubscriber<PaymentEntity>() {
+//                                    @Override
+//                                    protected void hookOnError(Throwable throwable) {
+//                                        if (throwable instanceof RedisConnectionFailureException) {
+//                                            isRedisDropped.set(true);
+//                                        }
+//                                    }
+//                                });
+//                        return Mono
+//                                .just(analyzeModel)
+//                                .delayElement(Duration.ofMillis(Constants.DELAY_REDIS_RESPONSE_MILLIS));
                     } else {
                         return Mono.just(analyzeModel);
                     }

@@ -37,39 +37,17 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
             return false;
         });
 
-//        Flux<AggregateGetLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
-//            if (val.getPaymentResponse() != null) {
-//                return true;
-//            }
-//            return false;
-//        });
+        Flux<AggregateGetLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
+            if (val.getPaymentResponse() != null) {
+                return true;
+            }
+            return false;
+        });
 
         Flux<AggregateGetLastPaymentDto> f = clientService
                 .getLastPayment(fluxNonCache);
 
-//        f.subscribe(new BaseSubscriber<AggregateGetLastPaymentDto>() {
-//            @Override
-//            protected void hookOnSubscribe(Subscription subscription) {
-//                super.hookOnSubscribe(subscription);
-//            }
-//
-//            @Override
-//            protected void hookOnNext(AggregateGetLastPaymentDto value) {
-//                super.hookOnNext(value);
-//            }
-//
-//            @Override
-//            protected void hookOnComplete() {
-//                super.hookOnComplete();
-//            }
-//
-//            @Override
-//            protected void hookOnError(Throwable throwable) {
-//                System.out.println();
-//            }
-//        });
-
-//        checkLastPaymentAsync(fluxCache);
+        checkLastPaymentAsync(fluxCache);
         checkLastPaymentAsync(f);
         return Mono.empty();
     }
