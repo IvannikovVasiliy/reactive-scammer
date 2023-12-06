@@ -15,6 +15,7 @@ import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
+import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
 import ru.neoflex.scammertracking.paymentdb.map.SourceMapper;
 import ru.neoflex.scammertracking.paymentdb.map.impl.SourceMapperImplementation;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
@@ -48,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
                     PaymentResponseDto paymentResp = null;
 
                     PaymentResponseDto paymentResponse = null;
+//                    return Mono.error(new PaymentNotFoundException("not found payment"));
                     return paymentRepository
                             .findByPayerCardNumber(cardNumber)
                             .map(payment -> {
@@ -56,76 +58,8 @@ public class PaymentServiceImpl implements PaymentService {
                                 return new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), paymentResponseDto);
                             })
                             .switchIfEmpty(Mono.just(new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), null)));
-//                            .retryWhen(
-//                                    Retry
-//                                            .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
-//                                            .filter(throwable -> !(throwable instanceof PaymentNotFoundException))
-//                                            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-//                                                throw new DatabaseInternalException("Database internal exception");
-//                                            })
-//                            );
-//                            .subscribe(new BaseSubscriber<PaymentResponseDto>() {
-//                                @Override
-//                                protected void hookOnNext(PaymentResponseDto value) {
-//                                    super.hookOnNext(value);
-////                                    paymentResponseList.add(value);
-//                                }
-//                            });
                 });
     }
-
-//        Mono<PaymentResponseDto> paymentResponse = paymentRepository
-//                .findByPayerCardNumber(cardNumber)
-//                .map(payment -> {
-//                    PaymentResponseDto paymentResponseDto = modelMapper.map(payment, PaymentResponseDto.class);
-//                    paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
-//                    return paymentResponseDto;
-//                })
-//                .switchIfEmpty(Mono.error(new PaymentNotFoundException(errMessage)))
-//                .retryWhen(
-//                        Retry
-//                                .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
-//                                .filter(throwable -> !(throwable instanceof PaymentNotFoundException))
-//                                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-//                                    throw new DatabaseInternalException("Database internal exception");
-//                                })
-//                );
-//
-//        return paymentResponse;
-//                }
-
-//        public Mono<Void> savePayment (SavePaymentRequestDto payment){
-//            log.info("received. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
-//                    payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
-//
-//            PaymentEntity paymentEntity = modelMapper.map(payment, PaymentEntity.class);
-//            paymentEntity.setLatitude(payment.getCoordinates().getLatitude());
-//            paymentEntity.setLongitude(payment.getCoordinates().getLongitude());
-//            paymentEntity.setDate(payment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-//
-//            return paymentRepository
-//                    .insert(paymentEntity)
-//                    .doOnError(error -> {
-//                        if (error instanceof DuplicateKeyException) {
-//                            String errorMessage = String.format("The payment with id=%s is already exist", payment.getId());
-//                            log.error("error. {}", errorMessage);
-//                            throw new PaymentAlreadyExistsException(errorMessage);
-//                        } else {
-//                            log.error("error. Cannot be saved the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
-//                                    payment.getId(), payment.getCoordinates(), payment.getPayerCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
-//                            throw new RuntimeException(error);
-//                        }
-//                    })
-//                    .retryWhen(
-//                            Retry
-//                                    .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
-//                                    .filter(throwable -> !(throwable instanceof PaymentAlreadyExistsException))
-//                                    .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-//                                        throw new DatabaseInternalException("Database internal exception");
-//                                    })
-//                    )
-//                    .then();
-//        }
 
     @Override
     public Flux<SavePaymentResponseDto> savePayment(Flux<SavePaymentRequestDto> payment) {
@@ -134,12 +68,13 @@ public class PaymentServiceImpl implements PaymentService {
 
         return payment
                 .flatMap(p -> {
+                    System.out.println("get payment from ");
                     PaymentEntity paymentEntity = modelMapper.map(p, PaymentEntity.class);
                     paymentEntity.setLatitude(p.getCoordinates().getLatitude());
                     paymentEntity.setLongitude(p.getCoordinates().getLongitude());
                     paymentEntity.setDate(p.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
-                    paymentRepository
+                    return paymentRepository
                             .insert(paymentEntity)
                             .doOnError(error -> {
                                 if (error instanceof DuplicateKeyException) {
@@ -152,19 +87,11 @@ public class PaymentServiceImpl implements PaymentService {
                                     throw new RuntimeException(error);
                                 }
                             })
-                            .retryWhen(
-                                    Retry
-                                            .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.INTERVAL_COUNT))
-                                            .filter(throwable -> !(throwable instanceof PaymentAlreadyExistsException))
-                                            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
-                                                throw new DatabaseInternalException("Database internal exception");
-                                            })
-                            )
-                            .subscribe();
+                            .map(x -> {
+                                return sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity);
+                            });
 
-                    SavePaymentResponseDto savePaymentResponse = sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity);
-
-                    return Mono.error(new RuntimeException("err"));
+//                    return Mono.just(savePaymentResponse);
                 });
     }
 

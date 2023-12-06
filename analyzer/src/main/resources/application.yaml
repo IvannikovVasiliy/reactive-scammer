@@ -19,6 +19,9 @@ redis:
 hostPort:
   paymentService: http://localhost:8082
 
+app:
+  durationPollMillis: 500
+
 logging:
   level:
     ru.neoflex.scammertracking.analyzer: debug

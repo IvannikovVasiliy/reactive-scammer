@@ -21,6 +21,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
     private final PaymentCacheService paymentCacheService;
 
     public Mono<Void> savePayment(Flux<SavePaymentRequestDto> savePaymentDtoFlux) {
+
         clientService
                 .savePayment(savePaymentDtoFlux)
                 .subscribe(new BaseSubscriber<SavePaymentResponseDto>() {
@@ -28,7 +29,7 @@ public class SavePaymentServiceImpl implements SavePaymentService {
                     @Override
                     protected void hookOnNext(SavePaymentResponseDto value) {
                         super.hookOnNext(value);
-                        paymentCacheService.saveIfAbsent(value);
+//                        paymentCacheService.saveIfAbsent(value);
                     }
 
                     @Override

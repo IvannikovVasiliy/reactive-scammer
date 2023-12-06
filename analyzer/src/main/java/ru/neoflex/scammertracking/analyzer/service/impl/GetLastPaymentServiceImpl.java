@@ -4,9 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
@@ -30,51 +28,53 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> process(Flux<AggregateLastPaymentDto> paymentRequestsFlux) {
-        Flux<AggregateLastPaymentDto> fluxNonCache = paymentRequestsFlux.filter(val -> {
+    public Mono<Void> process(Flux<AggregateGetLastPaymentDto> paymentRequestsFlux) {
+
+        Flux<AggregateGetLastPaymentDto> fluxNonCache = paymentRequestsFlux.filter(val -> {
             if (val.getPaymentResponse() == null) {
                 return true;
             }
             return false;
         });
-        Flux<AggregateLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
-            if (val.getPaymentResponse() != null) {
-                return true;
-            }
-            return false;
-        });
 
-        Flux<AggregateLastPaymentDto> f = clientService
+//        Flux<AggregateGetLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
+//            if (val.getPaymentResponse() != null) {
+//                return true;
+//            }
+//            return false;
+//        });
+
+        Flux<AggregateGetLastPaymentDto> f = clientService
                 .getLastPayment(fluxNonCache);
 
-        f.subscribe(new BaseSubscriber<AggregateLastPaymentDto>() {
-            @Override
-            protected void hookOnSubscribe(Subscription subscription) {
-                super.hookOnSubscribe(subscription);
-            }
-
-            @Override
-            protected void hookOnNext(AggregateLastPaymentDto value) {
-                super.hookOnNext(value);
-            }
-
-            @Override
-            protected void hookOnComplete() {
-                super.hookOnComplete();
-            }
-
-            @Override
-            protected void hookOnError(Throwable throwable) {
-                System.out.println();
-            }
-        });
+//        f.subscribe(new BaseSubscriber<AggregateGetLastPaymentDto>() {
+//            @Override
+//            protected void hookOnSubscribe(Subscription subscription) {
+//                super.hookOnSubscribe(subscription);
+//            }
+//
+//            @Override
+//            protected void hookOnNext(AggregateGetLastPaymentDto value) {
+//                super.hookOnNext(value);
+//            }
+//
+//            @Override
+//            protected void hookOnComplete() {
+//                super.hookOnComplete();
+//            }
+//
+//            @Override
+//            protected void hookOnError(Throwable throwable) {
+//                System.out.println();
+//            }
+//        });
 
 //        checkLastPaymentAsync(fluxCache);
-//        checkLastPaymentAsync(f);
+        checkLastPaymentAsync(f);
         return Mono.empty();
     }
 
-    private Mono<Void> checkLastPaymentAsync(Flux<AggregateLastPaymentDto> aggregatePaymentsFlux) {
+    private Mono<Void> checkLastPaymentAsync(Flux<AggregateGetLastPaymentDto> aggregatePaymentsFlux) {
         Flux<SavePaymentRequestDto> savePaymentFlux = aggregatePaymentsFlux
                 .flatMap(value -> {
                     boolean isTrusted;

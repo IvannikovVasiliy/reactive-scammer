@@ -8,5 +8,5 @@ public class Constants {
     public static final int RETRY_INTERVAL = 3;
 
     public static final long SCHEDULING_INTERVAL = 500;
-    public static final long DURATION_POLL_MILLIS = 500;
+    public static final long DELAY_REDIS_RESPONSE_MILLIS = 5;
 }
