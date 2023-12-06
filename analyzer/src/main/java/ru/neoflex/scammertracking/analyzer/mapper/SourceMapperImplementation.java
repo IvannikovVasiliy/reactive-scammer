@@ -110,6 +110,9 @@ public class SourceMapperImplementation {
         paymentEntity.setIdPayment(savePaymentResponseDto.getId());
         paymentEntity.setLatitude(savePaymentResponseDto.getCoordinates().getLatitude());
         paymentEntity.setLongitude(savePaymentResponseDto.getCoordinates().getLongitude());
+        paymentEntity.setDatePayment(
+                savePaymentResponseDto.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+        );
 
         return paymentEntity;
     }

@@ -4,22 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import ru.neoflex.scammertracking.analyzer.check.PreAnalyzer;
 import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateGetLastPaymentDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
-import ru.neoflex.scammertracking.analyzer.util.Constants;
 
-import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -61,32 +56,6 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                                     }
                                 })
                                 .then(Mono.just(analyzeModel));
-
-
-
-
-
-//                                .flatMap(payment -> {
-//                                    LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
-//                                    analyzeModel.setPaymentResponse(lastPaymentResponse);
-//                                    return Mono.just(analyzeModel);
-//                                });
-
-
-
-
-                        //                                .subscribeOn(Schedulers.newBoundedElastic(5, 10, "MyThreadGroup"))
-//                                .subscribe(new BaseSubscriber<PaymentEntity>() {
-//                                    @Override
-//                                    protected void hookOnError(Throwable throwable) {
-//                                        if (throwable instanceof RedisConnectionFailureException) {
-//                                            isRedisDropped.set(true);
-//                                        }
-//                                    }
-//                                });
-//                        return Mono
-//                                .just(analyzeModel)
-//                                .delayElement(Duration.ofMillis(Constants.DELAY_REDIS_RESPONSE_MILLIS));
                     } else {
                         return Mono.just(analyzeModel);
                     }

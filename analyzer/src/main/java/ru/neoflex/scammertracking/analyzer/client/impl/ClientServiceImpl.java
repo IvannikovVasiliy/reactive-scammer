@@ -53,7 +53,6 @@ public class ClientServiceImpl implements ClientService {
                 .body(savePaymentRequest, Flux.class)
                 .retrieve()
                 .bodyToFlux(SavePaymentResponseDto.class)
-                .delayElements(Duration.ofSeconds(5))
                 .flatMap(x -> {
                     System.out.println("respo ");
                     return Mono.just(x);
