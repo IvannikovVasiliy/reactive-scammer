@@ -43,24 +43,24 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                     AggregateGetLastPaymentDto analyzeModel = new AggregateGetLastPaymentDto();
                     analyzeModel.setPaymentRequest(paymentRequest);
 
-//                    if (!isRedisDropped.get()) {
-//                        return paymentCacheRepository
-//                                .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
-//                                .doOnNext(payment -> {
-//                                    log.info("get last payment with id={} from cache", payment.getIdPayment());
-//                                    LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
-//                                    analyzeModel.setPaymentResponse(lastPaymentResponse);
-//                                })
-//                                .doOnError(throwable -> {
-//                                    if (throwable instanceof RedisConnectionFailureException) {
-//                                        isRedisDropped.set(true);
-//                                    }
-//                                })
-//                                .then(Mono.just(analyzeModel));
-//                    } else {
+                    if (!isRedisDropped.get()) {
+                        return paymentCacheRepository
+                                .findPaymentByCardNumber(paymentRequest.getPayerCardNumber())
+                                .doOnNext(payment -> {
+                                    log.info("get last payment with id={} from cache", payment.getIdPayment());
+                                    LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
+                                    analyzeModel.setPaymentResponse(lastPaymentResponse);
+                                })
+                                .doOnError(throwable -> {
+                                    if (throwable instanceof RedisConnectionFailureException) {
+                                        isRedisDropped.set(true);
+                                    }
+                                })
+                                .then(Mono.just(analyzeModel));
+                    } else {
                         log.warn("Connection refused for Redis");
                         return Mono.just(analyzeModel);
-//                    }
+                    }
                 })
                 .onErrorResume(err ->
                         Mono.empty());
