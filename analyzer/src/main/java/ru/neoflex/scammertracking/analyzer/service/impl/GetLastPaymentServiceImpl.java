@@ -13,7 +13,7 @@ import ru.neoflex.scammertracking.analyzer.geo.GeoAnalyzer;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
-import ru.neoflex.scammertracking.analyzer.service.SavePaymentService;
+import ru.neoflex.scammertracking.analyzer.service.SavePaymentRouter;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
     private final SourceMapperImplementation sourceMapper;
     private final ClientService clientService;
     private final GeoAnalyzer geoAnalyzer;
-    private final SavePaymentService savePaymentService;
+    private final SavePaymentRouter savePaymentRouter;
     private final PaymentProducer paymentProducer;
     private final ObjectMapper objectMapper;
 
@@ -95,7 +95,7 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
                 .onErrorResume(err ->
                         Mono.empty());
 
-        savePaymentService.savePayment(savePaymentFlux);
+        savePaymentRouter.savePayment(savePaymentFlux);
 
         return Mono.empty();
     }

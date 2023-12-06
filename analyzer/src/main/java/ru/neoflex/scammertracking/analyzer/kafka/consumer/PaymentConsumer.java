@@ -46,36 +46,36 @@ public class PaymentConsumer {
     @Value("${app.durationPollMillis}")
     private Long durationPollMillis;
 
-    @Scheduled(fixedRate = 500)
+    @Scheduled(fixedRate = Constants.SCHEDULING_INTERVAL)
     public Mono<Void> pollMessages() {
         log.info("Start pollMessages in scheduling");
 
         List<PaymentRequestDto> consumeMessages = new ArrayList<>();
-//        Mono
-//                .fromRunnable(() -> {
-        ConsumerRecords<String, byte[]> records =
-                consumer.poll(Duration.ofMillis(500));
-        byte[] paymentRequestBytes = null;
-        String key = null;
-        try {
-            for (ConsumerRecord<String, byte[]> record : records) {
-                paymentRequestBytes = record.value();
-                key = record.key();
-                PaymentRequestDto paymentRequest =
-                        objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
-                consumeMessages.add(paymentRequest);
-                log.info(paymentRequest.toString());
-            }
-        } catch (IOException e) {
-            log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
-            paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
-        }
-//                })
-//                .doOnSuccess(val -> {
+        Mono
+                .fromRunnable(() -> {
+                    ConsumerRecords<String, byte[]> records =
+                            consumer.poll(Duration.ofMillis(durationPollMillis));
+                    byte[] paymentRequestBytes = null;
+                    String key = null;
+                    try {
+                        for (ConsumerRecord<String, byte[]> record : records) {
+                            paymentRequestBytes = record.value();
+                            key = record.key();
+                            PaymentRequestDto paymentRequest =
+                                    objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
+                            consumeMessages.add(paymentRequest);
+                            log.info(paymentRequest.toString());
+                        }
+                    } catch (IOException e) {
+                        log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
+                        paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
+                    }
+                })
+                .doOnSuccess(val -> {
                     Flux<PaymentRequestDto> flux = Flux.fromIterable(consumeMessages);
                     getCachedPaymentRouter.preAnalyzeConsumeMessage(flux);
-//                })
-//                .subscribe();
+                })
+                .subscribe();
 
         return Mono.empty();
     }

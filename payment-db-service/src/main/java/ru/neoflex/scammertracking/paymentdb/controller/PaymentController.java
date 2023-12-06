@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.paymentdb.domain.dto.*;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
 
+import java.time.Duration;
 import java.util.List;
 
 @RestController
@@ -66,11 +67,11 @@ public class PaymentController {
 //            }
 //        });
 
-        Flux<SavePaymentResponseDto> saveResponse = paymentService.savePayment(payment);
-
-        return saveResponse.flatMap(val -> {
-            return Mono.just(val);
-        });
+        return paymentService
+                .savePayment(payment)
+                .flatMap(x ->
+                        Mono.just(x))
+                .delayElements(Duration.ofSeconds(2));
 //        return Flux.just("str");
     }
 

@@ -6,6 +6,7 @@ import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
@@ -24,11 +25,12 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
     private final SourceMapperImplementation sourceMapper;
 
     @Override
-    public void saveIfAbsent(SavePaymentResponseDto savePaymentRequest) {
+    public Mono<Void> saveIfAbsent(SavePaymentResponseDto savePaymentRequest) {
         log.debug("saveIfAbsent. savePaymentRequest={}", savePaymentRequest);
 
         paymentCacheRepository
                 .findPaymentByCardNumber(savePaymentRequest.getPayerCardNumber())
+                .publishOn(Schedulers.newBoundedElastic(5, 10, "MyTreadGroup"))
                 .subscribe(new BaseSubscriber<>() {
 
                     Subscription subscription;
@@ -107,5 +109,7 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                         log.error("hookOnError. Error saving payment in redis, because of={}", throwable.getMessage());
                     }
                 });
+
+        return Mono.empty();
     }
 }
