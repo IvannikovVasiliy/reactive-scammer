@@ -12,6 +12,8 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
+import java.time.Duration;
+
 @Service
 @Slf4j
 public class ClientServiceImpl implements ClientService {
@@ -50,7 +52,12 @@ public class ClientServiceImpl implements ClientService {
                 .post()
                 .body(savePaymentRequest, Flux.class)
                 .retrieve()
-                .bodyToFlux(SavePaymentResponseDto.class);
+                .bodyToFlux(SavePaymentResponseDto.class)
+                .delayElements(Duration.ofSeconds(5))
+                .flatMap(x -> {
+                    System.out.println("respo ");
+                    return Mono.just(x);
+                });
     }
 
 //        lastPaymentResponse.subscribe(new BaseSubscriber<AggregateLastPaymentDto>() {

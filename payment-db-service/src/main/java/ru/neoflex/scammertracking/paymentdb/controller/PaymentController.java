@@ -70,8 +70,7 @@ public class PaymentController {
         return paymentService
                 .savePayment(payment)
                 .flatMap(x ->
-                        Mono.just(x))
-                .delayElements(Duration.ofSeconds(2));
+                        Mono.just(x));
 //        return Flux.just("str");
     }
 

@@ -28,7 +28,7 @@ public class SavePaymentRouterImpl implements SavePaymentRouter {
 
         clientService
                 .savePayment(savePaymentDtoFlux)
-                .delayElements(Duration.ofSeconds(1))
+                .delayElements(Duration.ofSeconds(10))
                 .subscribe(new BaseSubscriber<>() {
                     @Override
                     protected void hookOnNext(SavePaymentResponseDto value) {

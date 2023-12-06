@@ -76,8 +76,8 @@ public class PaymentServiceImpl implements PaymentService {
 
                     return paymentRepository
                             .insert(paymentEntity)
-                            .map(x -> {
-                                return sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity);
+                            .flatMap(x -> {
+                                return Mono.just(sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity));
                             })
                             .doOnError(error -> {
                                 if (error instanceof DuplicateKeyException) {
@@ -92,7 +92,8 @@ public class PaymentServiceImpl implements PaymentService {
                             });
 
 //                    return Mono.just(savePaymentResponse);
-                });
+                })
+                .delayElements(Duration.ofSeconds(1));
     }
 
     @Override
