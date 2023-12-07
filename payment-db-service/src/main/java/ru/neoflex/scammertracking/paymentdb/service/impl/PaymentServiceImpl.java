@@ -15,6 +15,7 @@ import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
+import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
 import ru.neoflex.scammertracking.paymentdb.map.impl.SourceMapperImplementation;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
@@ -38,6 +39,8 @@ public class PaymentServiceImpl implements PaymentService {
     public Flux<AggregateLastPaymentDto> getLastPayment(Flux<AggregateLastPaymentDto> paymentRequests) {
         log.info("request getLastPayment. receive flux of paymentRequests");
 
+//        return Flux.error(new PaymentNotFoundException("er"));
+
         return paymentRequests
                 .flatMap(paymentRequestDto -> {
                     log.info("flatMap. paymentRequestDto with id={}", paymentRequestDto);
@@ -54,6 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
                                 paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
                                 return new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), paymentResponseDto);
                             })
+//                            .switchIfEmpty(Mono.error(new PaymentNotFoundException("fg")));
                             .switchIfEmpty(Mono.just(new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), null)));
                 });
     }
@@ -62,6 +66,17 @@ public class PaymentServiceImpl implements PaymentService {
     public Flux<SavePaymentResponseDto> savePayment(Flux<SavePaymentRequestDto> payment) {
 //            log.info("received. lastPayment={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} }",
 //                    payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate());
+
+//        return Flux.error(new PaymentNotFoundException("gfh"));
+//
+
+//        return Flux.just(new SavePaymentResponseDto());
+
+//        return payment
+//                .flatMap(er -> {
+//                    return Mono.just(new SavePaymentResponseDto());
+////                    return Mono.error(new PaymentNotFoundException("p"));
+//                });
 
         return payment
                 .flatMap(p -> {
@@ -77,6 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
                                 if (error instanceof DuplicateKeyException) {
                                     String errorMessage = String.format("The payment with id=%s is already exist", p.getId());
                                     log.error("error. {}", errorMessage);
+//                                    return Mono.error(new PaymentNotFoundException("err"));
                                     throw new PaymentAlreadyExistsException(errorMessage);
                                 } else {
                                     log.error("error. Cannot be saved the payment: {id={},payerCardNumber={},receiverCardNUmber={},latitude={}, longitude={}, date={} }",
@@ -84,9 +100,20 @@ public class PaymentServiceImpl implements PaymentService {
                                     throw new RuntimeException(error);
                                 }
                             })
+//                            .onErrorResume(err -> {
+//                                if (err instanceof PaymentNotFoundException) {
+//                                    return Mono.error(err);
+//                                } else {
+//                                    return Mono.error(err);
+//                                }
+//                            })
+//                            .flatMap(e -> {
+//                                return Mono.error(new PaymentNotFoundException("er"));
+//                            });
                             .then(Mono.just(sourceMapper.sourceFromPaymentEntityToSavePaymentResponseDto(paymentEntity)));
 
 //                    return Mono.just(savePaymentResponse);
+//                    return Mono.error(new PaymentNotFoundException("er"));
                 });
                 //.delayElements(Duration.ofSeconds(1));
     }

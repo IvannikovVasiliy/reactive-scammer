@@ -35,10 +35,11 @@ public class ErrorHandler {
         log.error("Output handlePaymentNotFound. messageInfo={ errorCode={}, respCode={}, message={} }",
                 messageInfo.getErrorCode(), messageInfo.getRespCode(), messageInfo.getMessage());
         return Mono.just(messageInfo);
+//        return Mono.error(new PaymentNotFoundException("err"));
     }
 
     @ExceptionHandler(PaymentAlreadyExistsException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public Mono<MessageInfoDto> handlePaymentNotFound(PaymentAlreadyExistsException resourceExists) {
         messageInfo.setRespCode(Constants.BAD_REQUEST);
         messageInfo.setMessage(resourceExists.getMessage());

@@ -70,7 +70,7 @@ public class PaymentConsumer {
                             PaymentRequestDto paymentRequest =
                                     objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
                             consumeMessages.add(paymentRequest);
-                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
+//                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
                             System.out.println();
                         }
                     } catch (IOException e) {

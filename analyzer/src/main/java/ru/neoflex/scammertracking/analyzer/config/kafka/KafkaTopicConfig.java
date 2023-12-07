@@ -66,8 +66,8 @@ public class KafkaTopicConfig {
     public NewTopic topicBackoffPayments() {
         CustomLogs.logCreateTopicSuspiciousPayments();
         return TopicBuilder.name("backoff-payments")
-                .partitions(ConfigUtil.getCountPartitionsTopicSuspiciousPayments())
-                .replicas(ConfigUtil.getCountReplicasTopicSuspiciousPayments())
+                .partitions(ConfigUtil.getCountPartitionsTopicBackoffPayments())
+                .replicas(ConfigUtil.getCountReplicasTopicBackoffPayments())
                 .compact()
                 .build();
     }
