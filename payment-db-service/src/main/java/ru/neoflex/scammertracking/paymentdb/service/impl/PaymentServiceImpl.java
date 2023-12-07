@@ -57,6 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
                                 paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
                                 return new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), paymentResponseDto);
                             })
+//                            .switchIfEmpty(Mono.error(new PaymentNotFoundException("payment not founds")));
                             .switchIfEmpty(Mono.just(new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), null)));
                 });
     }

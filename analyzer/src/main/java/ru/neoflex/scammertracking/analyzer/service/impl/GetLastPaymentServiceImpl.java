@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
@@ -14,6 +16,10 @@ import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentRouter;
+import ru.neoflex.scammertracking.analyzer.util.Constants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,8 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
 
     @Override
     public Mono<Void> process(Flux<AggregateGetLastPaymentDto> paymentRequestsFlux) {
+        List<SavePaymentRequestDto> savePaymentList = new ArrayList<>();
+        Flux<SavePaymentRequestDto> savePaymentFlux = Flux.fromIterable(savePaymentList);
 
         Flux<AggregateGetLastPaymentDto> fluxNonCache = paymentRequestsFlux.filter(val -> {
             if (val.getPaymentResponse() == null) {
@@ -45,10 +53,20 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
         });
 
         Flux<AggregateGetLastPaymentDto> f = clientService
-                .getLastPayment(fluxNonCache);
+                .getLastPayment(fluxNonCache)
+                .onErrorResume(err -> {
+                    HttpStatusCode httpStatusCode = ((WebClientResponseException.NotFound) err).getStatusCode();
+                    if (Constants.NOT_FOUND.equals(httpStatusCode.value())) {
+                        //savePaymentList.add()
+                    }
+                    return Mono.empty();
+                });
 
-        checkLastPaymentAsync(fluxCache);
+//        checkLastPaymentAsync(fluxCache);
         checkLastPaymentAsync(f);
+
+//        savePaymentRouter.savePayment(savePaymentFlux);
+
         return Mono.empty();
     }
 
@@ -76,14 +94,5 @@ public class GetLastPaymentServiceImpl implements GetLastPaymentService {
         savePaymentRouter.savePayment(savePaymentFlux);
 
         return Mono.empty();
-    }
-
-    private void sendBackoffMessageInKafka(PaymentRequestDto paymentRequest) {
-        try {
-            byte[] backoffBytesPayment = objectMapper.writeValueAsBytes(paymentRequest);
-            paymentProducer.sendBackoffMessage(String.valueOf(paymentRequest.getId()), backoffBytesPayment);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

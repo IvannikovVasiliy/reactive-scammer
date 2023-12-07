@@ -46,7 +46,7 @@ public class PaymentConsumer {
     @Value("${app.durationPollMillis}")
     private Long durationPollMillis;
 
-    @Scheduled(fixedRate = Constants.SCHEDULING_INTERVAL)
+    @Scheduled(fixedRate = 10_000)
     public Mono<Void> pollMessages() {
         log.info("Start pollMessages in scheduling");
 
