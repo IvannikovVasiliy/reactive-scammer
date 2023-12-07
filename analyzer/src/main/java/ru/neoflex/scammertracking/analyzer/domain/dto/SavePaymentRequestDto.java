@@ -12,7 +12,7 @@ import java.util.Date;
 @ToString
 public class SavePaymentRequestDto {
 
-    public SavePaymentRequestDto(long id, String payerCardNumber, String receiverCardNumber, Coordinates coordinates, Date date) {
+    public SavePaymentRequestDto(Long id, String payerCardNumber, String receiverCardNumber, Coordinates coordinates, Date date) {
         this.id = id;
         this.payerCardNumber = payerCardNumber;
         this.receiverCardNumber = receiverCardNumber;
@@ -33,7 +33,7 @@ public class SavePaymentRequestDto {
     public SavePaymentRequestDto() {
     }
 
-    private long id;
+    private Long id;
     private String payerCardNumber;
     private String receiverCardNumber;
     private Coordinates coordinates;

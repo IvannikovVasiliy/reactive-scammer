@@ -1,15 +1,15 @@
 package ru.neoflex.scammertracking.analyzer.kafka.producer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
+import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -18,13 +18,16 @@ public class PaymentProducer {
 
     @Autowired
     public PaymentProducer(KafkaTemplate<String, PaymentResponseDto> kafkaJsonTemplate,
-                           KafkaTemplate<String, byte[]> kafkaBytesTemplate) {
+                           KafkaTemplate<String, byte[]> kafkaBytesTemplate,
+                           Map<Long, WrapPaymentRequestDto> storage) {
         this.kafkaJsonTemplate = kafkaJsonTemplate;
         this.kafkaBytesTemplate = kafkaBytesTemplate;
+        this.storage = storage;
     }
 
     private final KafkaTemplate<String, PaymentResponseDto> kafkaJsonTemplate;
     private final KafkaTemplate<String, byte[]> kafkaBytesTemplate;
+    private final Map<Long, WrapPaymentRequestDto> storage;
 
     @Value("${spring.kafka.topic.suspicious-payments}")
     private String suspiciousPaymentsTopic;
@@ -71,6 +74,7 @@ public class PaymentProducer {
                 log.error("error. Unable to send bytes-array message with key={} in {} due to : {}",
                         key, backoffPaymentsTopic, exception.getMessage());
             } else {
+                storage.remove(Long.valueOf(key));
                 log.info("Sent message with key={} and offset=={} in {} ",
                         key, result.getRecordMetadata().offset(), backoffPaymentsTopic);
             }

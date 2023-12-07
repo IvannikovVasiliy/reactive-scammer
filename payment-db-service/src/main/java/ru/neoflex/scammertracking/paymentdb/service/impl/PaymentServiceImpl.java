@@ -15,8 +15,6 @@ import ru.neoflex.scammertracking.paymentdb.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.paymentdb.domain.model.Coordinates;
 import ru.neoflex.scammertracking.paymentdb.error.exception.DatabaseInternalException;
 import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentAlreadyExistsException;
-import ru.neoflex.scammertracking.paymentdb.error.exception.PaymentNotFoundException;
-import ru.neoflex.scammertracking.paymentdb.map.SourceMapper;
 import ru.neoflex.scammertracking.paymentdb.map.impl.SourceMapperImplementation;
 import ru.neoflex.scammertracking.paymentdb.repository.PaymentRepository;
 import ru.neoflex.scammertracking.paymentdb.service.PaymentService;
@@ -49,7 +47,6 @@ public class PaymentServiceImpl implements PaymentService {
                     PaymentResponseDto paymentResp = null;
 
                     PaymentResponseDto paymentResponse = null;
-//                    return Mono.error(new PaymentNotFoundException("not found payment"));
                     return paymentRepository
                             .findByPayerCardNumber(cardNumber)
                             .map(payment -> {
@@ -57,7 +54,6 @@ public class PaymentServiceImpl implements PaymentService {
                                 paymentResponseDto.setCoordinates(new Coordinates(payment.getLatitude(), payment.getLongitude()));
                                 return new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), paymentResponseDto);
                             })
-//                            .switchIfEmpty(Mono.error(new PaymentNotFoundException("payment not founds")));
                             .switchIfEmpty(Mono.just(new AggregateLastPaymentDto(paymentRequestDto.getPaymentRequest(), null)));
                 });
     }

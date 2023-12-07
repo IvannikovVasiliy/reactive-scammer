@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
@@ -20,7 +21,9 @@ import ru.neoflex.scammertracking.analyzer.util.Constants;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -31,22 +34,25 @@ public class PaymentConsumer {
     public PaymentConsumer(GetCachedPaymentRouter getCachedPaymentRouter,
                            PaymentProducer paymentProducer,
                            Consumer<String, byte[]> consumer,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           Map<Long, WrapPaymentRequestDto> storage) {
         this.getCachedPaymentRouter = getCachedPaymentRouter;
         this.paymentProducer = paymentProducer;
         this.consumer = consumer;
         this.objectMapper = objectMapper;
+        this.storage = storage;
     }
 
     private final GetCachedPaymentRouter getCachedPaymentRouter;
     private final PaymentProducer paymentProducer;
     private final Consumer<String, byte[]> consumer;
     private final ObjectMapper objectMapper;
+    private final Map<Long, WrapPaymentRequestDto> storage;
 
     @Value("${app.durationPollMillis}")
     private Long durationPollMillis;
 
-    @Scheduled(fixedRate = 10_000)
+    @Scheduled(fixedRate = 500)
     public Mono<Void> pollMessages() {
         log.info("Start pollMessages in scheduling");
 
@@ -64,7 +70,8 @@ public class PaymentConsumer {
                             PaymentRequestDto paymentRequest =
                                     objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
                             consumeMessages.add(paymentRequest);
-                            log.info(paymentRequest.toString());
+                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
+                            System.out.println();
                         }
                     } catch (IOException e) {
                         log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);

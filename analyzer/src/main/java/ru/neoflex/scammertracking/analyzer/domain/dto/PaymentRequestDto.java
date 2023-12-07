@@ -31,17 +31,17 @@ public class PaymentRequestDto {
     public PaymentRequestDto() {
     }
 
-    private long id;
+    private Long id;
     private String payerCardNumber;
     private String receiverCardNumber;
     private Coordinates coordinates;
     private LocalDateTime date;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
