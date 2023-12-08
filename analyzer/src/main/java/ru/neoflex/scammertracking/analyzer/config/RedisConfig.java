@@ -15,31 +15,29 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
-import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 @Configuration
 public class RedisConfig {
 
     @Value("${redis.hostName}")
-    private String hostName;
+    private String HOST_NAME;
     @Value("${redis.port}")
-    private int port;
+    private int PORT;
 
-    private final Integer REDIS_TIMEOUT = ConfigUtil.getRedisTimeout();
+    @Value("${app.redisTimeout}")
+    private Integer REDIS_TIMEOUT;
 
     @Bean
     @Primary
     public ReactiveRedisConnectionFactory lettuceConnectionFactory() {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-//                .commandTimeout(Duration.ofSeconds(REDIS_TIMEOUT))
-//                .commandTimeout(Duration.ofMillis(1))
-                .commandTimeout(Duration.ZERO)
-                .shutdownTimeout(Duration.ZERO)
+                .commandTimeout(Duration.ofSeconds(REDIS_TIMEOUT))
                 .build();
 
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(hostName, port), clientConfig);
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(HOST_NAME, PORT), clientConfig);
     }
 
     @Bean
@@ -54,7 +52,11 @@ public class RedisConfig {
                 .hashKey(new Jackson2JsonRedisSerializer<>(String.class))
                 .hashValue(new GenericJackson2JsonRedisSerializer())
                 .build();
-        return new ReactiveRedisTemplate<>(factory, context);
+
+        ReactiveRedisTemplate<String, PaymentEntity> reactiveRedisTemplate = new ReactiveRedisTemplate<>(factory, context);
+        reactiveRedisTemplate.expire("Payment", Duration.of(5, ChronoUnit.SECONDS)).subscribe();
+
+        return reactiveRedisTemplate;
     }
 
 }

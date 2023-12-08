@@ -1,19 +1,15 @@
 package ru.neoflex.scammertracking.analyzer.resp;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class AggregateLastPaymentDto {
-
-    public AggregateLastPaymentDto(LastPaymentRequestDto paymentRequest, PaymentResponseDto paymentResponse) {
-        this.paymentRequest = paymentRequest;
-        this.paymentResponse = paymentResponse;
-    }
-
-    public AggregateLastPaymentDto() {
-    }
 
     private LastPaymentRequestDto paymentRequest;
     private PaymentResponseDto paymentResponse;

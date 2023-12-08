@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,36 +32,36 @@ import java.util.Map;
 public class PaymentConsumer {
 
     @Autowired
-    public PaymentConsumer(GetCachedPaymentRouter getCachedPaymentRouter,
+    public PaymentConsumer(GetCachedPaymentRouter cachePaymentRouter,
                            PaymentProducer paymentProducer,
                            Consumer<String, byte[]> consumer,
                            ObjectMapper objectMapper,
-                           Map<Long, WrapPaymentRequestDto> storage) {
-        this.getCachedPaymentRouter = getCachedPaymentRouter;
+                           @Qualifier("storage") Map<Long, WrapPaymentRequestDto> storage) {
+        this.cachePaymentRouter = cachePaymentRouter;
         this.paymentProducer = paymentProducer;
         this.consumer = consumer;
         this.objectMapper = objectMapper;
         this.storage = storage;
     }
 
-    private final GetCachedPaymentRouter getCachedPaymentRouter;
+    private final GetCachedPaymentRouter cachePaymentRouter;
     private final PaymentProducer paymentProducer;
     private final Consumer<String, byte[]> consumer;
     private final ObjectMapper objectMapper;
     private final Map<Long, WrapPaymentRequestDto> storage;
 
     @Value("${app.durationPollMillis}")
-    private Long durationPollMillis;
+    private Long DURATION_POLL_MESSAGES_MILLIS;
 
-    @Scheduled(fixedRate = 500)
-    public Mono<Void> pollMessages() {
+    @Scheduled(fixedRate = Constants.SCHEDULING_POLL_MESSAGES_INTERVAL)
+    public void pollMessages() {
         log.info("Start pollMessages in scheduling");
 
-        List<PaymentRequestDto> consumeMessages = new ArrayList<>();
+        List<PaymentRequestDto> consumeMessagesList = new ArrayList<>();
         Mono
                 .fromRunnable(() -> {
                     ConsumerRecords<String, byte[]> records =
-                            consumer.poll(Duration.ofMillis(durationPollMillis));
+                            consumer.poll(Duration.ofMillis(DURATION_POLL_MESSAGES_MILLIS));
                     byte[] paymentRequestBytes = null;
                     String key = null;
                     try {
@@ -69,9 +70,8 @@ public class PaymentConsumer {
                             key = record.key();
                             PaymentRequestDto paymentRequest =
                                     objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
-                            consumeMessages.add(paymentRequest);
-//                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
-                            System.out.println();
+                            consumeMessagesList.add(paymentRequest);
+                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
                         }
                     } catch (IOException e) {
                         log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
@@ -79,11 +79,9 @@ public class PaymentConsumer {
                     }
                 })
                 .doOnSuccess(val -> {
-                    Flux<PaymentRequestDto> flux = Flux.fromIterable(consumeMessages);
-                    getCachedPaymentRouter.preAnalyzeConsumeMessage(flux);
+                    Flux<PaymentRequestDto> paymentFlux = Flux.fromIterable(consumeMessagesList);
+                    cachePaymentRouter.preAnalyzeConsumeMessage(paymentFlux);
                 })
                 .subscribe();
-
-        return Mono.empty();
     }
 }

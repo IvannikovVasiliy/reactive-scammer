@@ -2,14 +2,8 @@ package ru.neoflex.scammertracking.analyzer.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscription;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.entity.PaymentEntity;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
@@ -25,24 +19,12 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
     private final SourceMapperImplementation sourceMapper;
 
     @Override
-    public Mono<Void> saveIfAbsent(SavePaymentResponseDto savePaymentRequest) {
-        log.debug("saveIfAbsent. savePaymentRequest={}", savePaymentRequest);
-
+    public void saveIfAbsent(SavePaymentResponseDto savePaymentRequest) {
         paymentCacheRepository
                 .findPaymentByCardNumber(savePaymentRequest.getPayerCardNumber())
-                .publishOn(Schedulers.newBoundedElastic(5, 10, "MyTreadGroup"))
                 .subscribe(new BaseSubscriber<>() {
 
-                    Subscription subscription;
                     PaymentEntity payment = null;
-
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        super.hookOnSubscribe(subscription);
-                        log.info("hookOnSubscribe. Subscribe to payment-service for saving payment");
-                        this.subscription = subscription;
-                        subscription.request(1);
-                    }
 
                     @Override
                     protected void hookOnNext(PaymentEntity payment) {
@@ -50,7 +32,6 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                         log.info("hookOnNext. get payment from cache. payment={ payerCardNumber={}, receiverCardNumber={}, idPayment={}, latitude={}, longitude={}, datePayment={} }",
                                 payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getIdPayment(), payment.getLatitude(), payment.getLongitude(), payment.getDatePayment());
                         this.payment = payment;
-                        subscription.request(1);
                     }
 
                     @Override
@@ -58,58 +39,13 @@ public class PaymentCacheServiceImpl implements PaymentCacheService {
                         super.hookOnComplete();
                         log.info("hookOnComplete. Complete getting cache payment");
                         if (payment == null) {
-                            PaymentEntity paymentEntity = sourceMapper.sourceFromSavePaymentResponseDtoToPaymentEntity(savePaymentRequest);
+                            PaymentEntity paymentEntity =
+                                    sourceMapper.sourceFromSavePaymentResponseDtoToPaymentEntity(savePaymentRequest);
                             paymentCacheRepository
                                     .save(paymentEntity)
-                                    .doOnError(err -> {
-                                        System.out.println(err);
-                                    })
-                                    .doOnSuccess(payment -> paymentCacheRepository
-                                            .expire()
-                                            .doOnError(error -> log.error("Error. Expiration date not setted to payment cache"))
-                                            .subscribe(new BaseSubscriber<>() {
-
-                                                Subscription subscription;
-
-                                                @Override
-                                                protected void hookOnSubscribe(Subscription subscription) {
-                                                    super.hookOnSubscribe(subscription);
-                                                    this.subscription = subscription;
-                                                    subscription.request(1);
-                                                }
-
-                                                @Override
-                                                protected void hookOnNext(Boolean value) {
-                                                    super.hookOnNext(value);
-                                                    subscription.request(1);
-                                                }
-                                            }))
-                                    .subscribe(new BaseSubscriber<Boolean>() {
-
-                                        Subscription subscription;
-
-                                        @Override
-                                        protected void hookOnSubscribe(Subscription subscription) {
-                                            super.hookOnSubscribe(subscription);
-                                            this.subscription = subscription;
-                                            subscription.request(1);
-                                        }
-
-                                        @Override
-                                        protected void hookOnNext(Boolean value) {
-                                            super.hookOnNext(value);
-                                            subscription.request(1);
-                                        }
-                                    });
+                                    .subscribe();
                         }
                     }
-
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-                        log.error("hookOnError. Error saving payment in redis, because of={}", throwable.getMessage());
-                    }
                 });
-
-        return Mono.empty();
     }
 }

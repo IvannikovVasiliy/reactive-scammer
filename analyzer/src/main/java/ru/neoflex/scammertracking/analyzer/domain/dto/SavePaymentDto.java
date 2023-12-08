@@ -6,15 +6,13 @@ import lombok.*;
 @Setter
 public class SavePaymentDto {
 
-    public SavePaymentDto(boolean isTrusted, SavePaymentRequestDto savePaymentRequestDto, PaymentResponseDto paymentResponseDto) {
-        this.isTrusted = isTrusted;
+    public SavePaymentDto(SavePaymentRequestDto savePaymentRequestDto, PaymentResponseDto paymentResponseDto) {
         this.savePaymentRequestDto = savePaymentRequestDto;
         this.paymentResponseDto = paymentResponseDto;
     }
 
     public SavePaymentDto() { }
 
-    private boolean isTrusted;
     private SavePaymentRequestDto savePaymentRequestDto;
     private PaymentResponseDto paymentResponseDto;
 }

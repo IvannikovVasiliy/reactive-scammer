@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import ru.neoflex.scammertracking.analyzer.check.PreAnalyzer;
 import ru.neoflex.scammertracking.analyzer.check.RequestChecker;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
-import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 
@@ -24,17 +23,15 @@ public class PreAnalyzerImpl implements PreAnalyzer {
 
     @Override
     public boolean preAnalyze(PaymentRequestDto paymentRequest) {
-        PaymentResponseDto paymentResult = sourceMapper.sourceFromPaymentRequestDtoToPaymentResponseDto(paymentRequest);
         boolean isPreCheckSuspicious = requestChecker.preCheckSuspicious(paymentRequest);
         if (isPreCheckSuspicious) {
             long key = paymentRequest.getId();
-            paymentResult.setTrusted(false);
             byte[] paymentResultBytes = new byte[0];
             try {
-                paymentResultBytes = objectMapper.writeValueAsBytes(paymentResult);
+                paymentResultBytes = objectMapper.writeValueAsBytes(paymentRequest);
             } catch (JsonProcessingException e) {
                 log.error("Unable to parse paymentResult into bytes");
-                throw new RuntimeException(e.getMessage());
+                throw new RuntimeException(e);
             } finally {
                 log.error("Sent message with key={} in suspicious-topic", key);
                 paymentProducer.sendSuspiciousMessage(String.valueOf(key), paymentResultBytes);

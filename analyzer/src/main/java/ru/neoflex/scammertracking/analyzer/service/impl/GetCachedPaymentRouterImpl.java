@@ -1,5 +1,7 @@
 package ru.neoflex.scammertracking.analyzer.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisConnectionFailureException;
@@ -10,12 +12,13 @@ import ru.neoflex.scammertracking.analyzer.check.PreAnalyzer;
 import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateGetLastPaymentDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.exception.SuspiciousPaymentException;
+import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
 import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
-import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentService;
+import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentRouter;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -23,21 +26,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
 
-    private final GetLastPaymentService lastPaymentService;
+    private final GetLastPaymentRouter lastPaymentService;
     private final SourceMapperImplementation sourceMapper;
     private final PaymentCacheRepository paymentCacheRepository;
     private final PreAnalyzer preAnalyzer;
     private final AtomicBoolean isRedisDropped;
+    private final PaymentProducer paymentProducer;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> preAnalyzeConsumeMessage(Flux<PaymentRequestDto> consumeMessages) {
-        Flux<AggregateGetLastPaymentDto> aggregatePaymentsFlux = consumeMessages
+    public void/*Mono<Void>*/ preAnalyzeConsumeMessage(Flux<PaymentRequestDto> paymentRequestDtoFlux) {
+        Flux<AggregateGetLastPaymentDto> aggregatePaymentsFlux = paymentRequestDtoFlux
                 .flatMap(paymentRequest -> {
                     log.info("flatMap preAnalyzeConsumeMessage. paymentRequest with id={}", paymentRequest.getId());
 
                     boolean isTrusted = preAnalyzer.preAnalyze(paymentRequest);
                     if (!isTrusted) {
-                        throw new RuntimeException(String.format("Payment with id=%d is failed in a stage of pre-analyze", paymentRequest.getId()));
+                        byte[] suspiciousPaymentBytes;
+                        try {
+                            suspiciousPaymentBytes = objectMapper.writeValueAsBytes(paymentRequest);
+                        } catch (JsonProcessingException e) {
+                            return Flux.error(new RuntimeException(e));
+                        }
+
+//                        paymentProducer.sendSuspiciousMessage(paymentRequest.getPayerCardNumber(), suspiciousPaymentBytes);
+                        return Flux.error(new SuspiciousPaymentException(String.format("Payment with id=%d is failed in a stage of pre-analyze", paymentRequest.getId())));
                     }
 
                     AggregateGetLastPaymentDto analyzeModel = new AggregateGetLastPaymentDto();
@@ -62,11 +75,17 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                         return Mono.just(analyzeModel);
                     }
                 })
-                .onErrorResume(err ->
-                        Mono.empty());
+//                .onErrorContinue((throwable, o) -> {
+//                    if (throwable instanceof SuspiciousPaymentException) {
+////                        paymentProducer
+//                    }
+//                });
+                .onErrorContinue((throwable, o) -> {});
+//                .onErrorResume(err ->
+//                        Mono.empty());
 
         lastPaymentService.process(aggregatePaymentsFlux);
 
-        return Mono.empty();
+//        return Mono.empty();
     }
 }

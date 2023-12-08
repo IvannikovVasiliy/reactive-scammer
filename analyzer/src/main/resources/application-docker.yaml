@@ -19,6 +19,13 @@ redis:
 hostPort:
   paymentService: http://payment-service:8082
 
+app:
+  durationPollMillis: 500
+  signForHandleBackoffPayment: 10000
+  retryCount: 3
+  retryIntervalSeconds: 3
+  redisTimeout: 10
+
 logging:
   level:
     ru.neoflex.scammertracking.analyzer: info

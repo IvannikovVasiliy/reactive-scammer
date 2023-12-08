@@ -3,12 +3,13 @@ package ru.neoflex.scammertracking.analyzer.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
+import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.util.Date;
 import java.util.Map;
@@ -22,10 +23,13 @@ public class BackoffScheduler {
     private final PaymentProducer paymentProducer;
     private final ObjectMapper objectMapper;
 
-    @Scheduled(fixedRate = 10_000)
-    public Mono<Void> scheduled() {
+    @Value("${app.signForHandleBackoffPayment}")
+    private Long SIGN_HANDLING_BACKOFF_PAYMENT;
+
+    @Scheduled(fixedRate = Constants.SCHEDULING_ITERATE_BACKOFF_PAYMENTS_INTERVAL)
+    public void iterateBackoffPaymentsScheduled() {
         storage.forEach((key, value) -> {
-            if (new Date().getTime() - value.getDate() > 10_000) {
+            if (new Date().getTime() - value.getDate() > SIGN_HANDLING_BACKOFF_PAYMENT) {
                 byte[] savePaymentByte;
                 try {
                     savePaymentByte = objectMapper.writeValueAsBytes(value.getPaymentRequestDto());
@@ -35,7 +39,5 @@ public class BackoffScheduler {
                 paymentProducer.sendBackoffMessage(value.getPaymentRequestDto().getId().toString(), savePaymentByte);
             }
         });
-
-        return Mono.empty();
     }
 }

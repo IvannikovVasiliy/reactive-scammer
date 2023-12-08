@@ -12,8 +12,6 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
-import java.time.Duration;
-
 @Service
 @Slf4j
 public class ClientServiceImpl implements ClientService {
@@ -36,13 +34,6 @@ public class ClientServiceImpl implements ClientService {
                     AggregateGetLastPaymentDto aggregateModel = new AggregateGetLastPaymentDto(value.getPaymentRequest(), value.getPaymentResponse());
                     return Mono.just(aggregateModel);
                 });
-//                .retryWhen(Retry
-//                        .fixedDelay(Constants.RETRY_COUNT, Duration.ofSeconds(Constants.RETRY_INTERVAL))
-//                        .filter(throwable ->
-//                                throwable.getCause() instanceof new AbstractChannel().)
-//                        .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
-//                            throw new RuntimeException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
-//                        })));
     }
 
     @Override
@@ -52,32 +43,6 @@ public class ClientServiceImpl implements ClientService {
                 .post()
                 .body(savePaymentRequest, Flux.class)
                 .retrieve()
-                .bodyToFlux(SavePaymentResponseDto.class)
-                .flatMap(x -> {
-                    System.out.println("respo ");
-                    return Mono.just(x);
-                });
+                .bodyToFlux(SavePaymentResponseDto.class);
     }
-
-//        lastPaymentResponse.subscribe(new BaseSubscriber<AggregateLastPaymentDto>() {
-//            @Override
-//            protected void hookOnSubscribe(Subscription subscription) {
-//                super.hookOnSubscribe(subscription);
-//            }
-//
-//            @Override
-//            protected void hookOnNext(AggregateLastPaymentDto value) {
-//                super.hookOnNext(value);
-//            }
-//
-//            @Override
-//            protected void hookOnComplete() {
-//                super.hookOnComplete();
-//            }
-//
-//            @Override
-//            protected void hookOnError(Throwable throwable) {
-//                super.hookOnError(throwable);
-//            }
-//        });
 }

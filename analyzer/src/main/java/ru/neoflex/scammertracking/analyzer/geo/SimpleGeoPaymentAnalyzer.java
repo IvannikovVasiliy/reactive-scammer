@@ -20,15 +20,15 @@ public class SimpleGeoPaymentAnalyzer implements GeoAnalyzer {
 
         double distance = GeoCoordinates.calculateDistance(lastGeoPoint, currentGeoPoint);
 
-        if (lastPaymentDate.plusHours(1).compareTo(currentPaymentDate)>=0 && distance > 10000) {
+        if (!lastPaymentDate.plusHours(1).isBefore(currentPaymentDate) && distance > 10000) {
             log.warn("The payment with id={} is suspicious", currentPayment.getId());
             return false;
         }
-        if (lastPaymentDate.plusMinutes(1).compareTo(currentPaymentDate)>=0 && distance > 50) {
+        if (!lastPaymentDate.plusMinutes(1).isBefore(currentPaymentDate) && distance > 50) {
             log.warn("The payment with id={} is suspicious", currentPayment.getId());
             return false;
         }
-        if (lastPaymentDate.plusSeconds(1).compareTo(currentPaymentDate)>=0 && distance > 1) {
+        if (!lastPaymentDate.plusSeconds(1).isBefore(currentPaymentDate) && distance > 1) {
             log.warn("The payment with id={} is suspicious", currentPayment.getId());
             return false;
         }
