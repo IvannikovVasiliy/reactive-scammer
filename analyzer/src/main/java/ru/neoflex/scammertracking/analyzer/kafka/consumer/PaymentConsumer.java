@@ -58,6 +58,8 @@ public class PaymentConsumer {
         log.info("Start pollMessages in scheduling");
 
         List<PaymentRequestDto> consumeMessagesList = new ArrayList<>();
+//        ConsumerRecords<String, byte[]> records =
+//                consumer.poll(Duration.ofMillis(500));
         Mono
                 .fromRunnable(() -> {
                     ConsumerRecords<String, byte[]> records =
@@ -79,8 +81,10 @@ public class PaymentConsumer {
                     }
                 })
                 .doOnSuccess(val -> {
-                    Flux<PaymentRequestDto> paymentFlux = Flux.fromIterable(consumeMessagesList);
-                    cachePaymentRouter.preAnalyzeConsumeMessage(paymentFlux);
+//                    if (records.count() > 0) {
+                        Flux<PaymentRequestDto> paymentFlux = Flux.fromIterable(consumeMessagesList);
+                        cachePaymentRouter.preAnalyzeConsumeMessage(paymentFlux);
+//                    }
                 })
                 .subscribe();
     }

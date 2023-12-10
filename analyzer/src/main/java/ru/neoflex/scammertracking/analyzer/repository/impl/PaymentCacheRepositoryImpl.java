@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit;
 public class PaymentCacheRepositoryImpl implements PaymentCacheRepository {
 
     private static final String HASH_KEY = "Payment";
-    private static final Long EXPIRATION_PAYMENT = 1L;
+    private static final Long EXPIRATION_PAYMENT = 30L;
 
     private final ReactiveRedisTemplate<String, PaymentEntity> redisTemplate;
 
@@ -39,6 +39,6 @@ public class PaymentCacheRepositoryImpl implements PaymentCacheRepository {
     @Override
     public Mono<Boolean> expire() {
         log.info("set expiration for payment cache");
-        return redisTemplate.expire(HASH_KEY, Duration.of(EXPIRATION_PAYMENT, ChronoUnit.DAYS));
+        return redisTemplate.expire(HASH_KEY, Duration.of(EXPIRATION_PAYMENT, ChronoUnit.DAYS/*seconds*/));
     }
 }

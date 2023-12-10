@@ -9,7 +9,7 @@ public class Constants {
 
     public static final long SCHEDULING_POLL_MESSAGES_INTERVAL = 500;
     public static final long SCHEDULING_ITERATE_BACKOFF_PAYMENTS_INTERVAL = 10_000;
-    public static final long SCHEDULING_EXPIRATION_CACHE_INTERVAL = 30_000;
+    public static final long SCHEDULING_EXPIRATION_CACHE_INTERVAL = 60_000;
     public static final long DELAY_REDIS_RESPONSE_MILLIS = 5;
 
     public static final String GROUP_BOUNDED_ELASTIC_FOR_CACHE = "SAVE_GROUP_BOUNDED_ELASTIC_FOR_CACHE";

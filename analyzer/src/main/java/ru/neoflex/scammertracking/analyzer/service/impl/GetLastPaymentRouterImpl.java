@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
@@ -17,6 +18,9 @@ import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentRouter;
 import ru.neoflex.scammertracking.analyzer.service.SavePaymentRouter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,24 +36,35 @@ public class GetLastPaymentRouterImpl implements GetLastPaymentRouter {
 
     @Override
     public void process(Flux<AggregateGetLastPaymentDto> paymentRequestsFlux) {
-        Flux<AggregateGetLastPaymentDto> fluxNonCache = paymentRequestsFlux.filter(val -> {
-            if (val.getPaymentResponse() == null) {
-                return true;
-            }
-            return false;
-        });
-        Flux<AggregateGetLastPaymentDto> fluxCache = paymentRequestsFlux.filter(val -> {
-            if (val.getPaymentResponse() != null) {
-                return true;
-            }
-            return false;
-        });
+        List<AggregateGetLastPaymentDto> listCache = new ArrayList<>();
+        List<AggregateGetLastPaymentDto> listNonCache = new ArrayList<>();
 
-        Flux<AggregateGetLastPaymentDto> f = clientService
-                .getLastPayment(fluxNonCache);
+        Flux<AggregateGetLastPaymentDto> fluxNonCache = Flux.fromIterable(listNonCache);
+        Flux<AggregateGetLastPaymentDto> fluxCache = Flux.fromIterable(listCache);
+        paymentRequestsFlux
+                .subscribe(new BaseSubscriber<>() {
+                    @Override
+                    protected void hookOnNext(AggregateGetLastPaymentDto val) {
+                        super.hookOnNext(val);
+                        if (val.getPaymentResponse() == null) {
+                            listNonCache.add(val);
+                        } else {
+                            listCache.add(val);
+                        }
 
-        checkLastPaymentAsync(fluxCache);
-        checkLastPaymentAsync(f);
+                    }
+                    
+                    @Override
+                    protected void hookOnComplete() {
+                        super.hookOnComplete();
+                        Flux<AggregateGetLastPaymentDto> f = clientService
+                                .getLastPayment(fluxNonCache);
+
+                        checkLastPaymentAsync(f);
+                        checkLastPaymentAsync(fluxCache);
+                    }
+                });
+
     }
 
     private void checkLastPaymentAsync(Flux<AggregateGetLastPaymentDto> aggregatePaymentsFlux) {

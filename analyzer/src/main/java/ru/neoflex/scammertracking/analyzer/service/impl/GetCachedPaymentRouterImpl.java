@@ -31,11 +31,10 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
     private final PaymentCacheRepository paymentCacheRepository;
     private final PreAnalyzer preAnalyzer;
     private final AtomicBoolean isRedisDropped;
-    private final PaymentProducer paymentProducer;
     private final ObjectMapper objectMapper;
 
     @Override
-    public void/*Mono<Void>*/ preAnalyzeConsumeMessage(Flux<PaymentRequestDto> paymentRequestDtoFlux) {
+    public void preAnalyzeConsumeMessage(Flux<PaymentRequestDto> paymentRequestDtoFlux) {
         Flux<AggregateGetLastPaymentDto> aggregatePaymentsFlux = paymentRequestDtoFlux
                 .flatMap(paymentRequest -> {
                     log.info("flatMap preAnalyzeConsumeMessage. paymentRequest with id={}", paymentRequest.getId());
@@ -49,7 +48,6 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                             return Flux.error(new RuntimeException(e));
                         }
 
-//                        paymentProducer.sendSuspiciousMessage(paymentRequest.getPayerCardNumber(), suspiciousPaymentBytes);
                         return Flux.error(new SuspiciousPaymentException(String.format("Payment with id=%d is failed in a stage of pre-analyze", paymentRequest.getId())));
                     }
 
@@ -64,10 +62,13 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                                     LastPaymentResponseDto lastPaymentResponse = sourceMapper.sourceFromPaymentEntityToLastPaymentResponseDto(payment);
                                     analyzeModel.setPaymentResponse(lastPaymentResponse);
                                 })
-                                .doOnError(throwable -> {
-                                    if (throwable instanceof RedisConnectionFailureException) {
+                                .onErrorResume(err -> {
+                                    if (err instanceof RedisConnectionFailureException) {
+                                        log.warn("Connection refused for Redis");
                                         isRedisDropped.set(true);
+                                        return Mono.empty();
                                     }
+                                    return Mono.error(err);
                                 })
                                 .then(Mono.just(analyzeModel));
                     } else {
@@ -75,17 +76,9 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                         return Mono.just(analyzeModel);
                     }
                 })
-//                .onErrorContinue((throwable, o) -> {
-//                    if (throwable instanceof SuspiciousPaymentException) {
-////                        paymentProducer
-//                    }
-//                });
-                .onErrorContinue((throwable, o) -> {});
-//                .onErrorResume(err ->
-//                        Mono.empty());
+                .onErrorResume(err ->
+                        Mono.empty());
 
         lastPaymentService.process(aggregatePaymentsFlux);
-
-//        return Mono.empty();
     }
 }

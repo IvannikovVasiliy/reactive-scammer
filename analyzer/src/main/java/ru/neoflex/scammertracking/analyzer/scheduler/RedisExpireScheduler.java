@@ -14,8 +14,8 @@ public class RedisExpireScheduler {
 
     private final PaymentCacheRepository paymentCacheRepository;
 
-    @Scheduled(fixedRate = Constants.SCHEDULING_ITERATE_BACKOFF_PAYMENTS_INTERVAL)
-    public void setExpirePaymentSchedule() {
-        paymentCacheRepository.expire().subscribe();
-    }
+//    @Scheduled(fixedRate = Constants.SCHEDULING_EXPIRATION_CACHE_INTERVAL)
+//    public void setExpirePaymentSchedule() {
+//        paymentCacheRepository.expire().subscribe();
+//    }
 }

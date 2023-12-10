@@ -2,13 +2,16 @@ package ru.neoflex.scammertracking.analyzer.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Subscription;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.netty.http.client.PrematureCloseException;
 import reactor.util.retry.Retry;
 import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.exception.ConnectionRefusedException;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
@@ -54,6 +57,22 @@ public class SavePaymentRouterImpl implements SavePaymentRouter {
 //                        .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> {
 //                            throw new ConnectionRefusedException("Error getLastPaymentFromClientService. External ms-payment failed to process after max retries");
 //                        })))
-                .subscribe();
+                .subscribe(new BaseSubscriber<SavePaymentResponseDto>() {
+
+                    @Override
+                    protected void hookOnSubscribe(Subscription subscription) {
+                        super.hookOnSubscribe(subscription);
+                    }
+
+                    @Override
+                    protected void hookOnComplete() {
+                        super.hookOnComplete();
+                    }
+
+                    @Override
+                    protected void hookOnError(Throwable throwable) {
+                        super.hookOnError(throwable);
+                    }
+                });
     }
 }
