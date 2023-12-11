@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.neoflex.scammertracking.analyzer.check.PaymentChecker;
 import ru.neoflex.scammertracking.analyzer.check.PreAnalyzer;
-import ru.neoflex.scammertracking.analyzer.check.RequestChecker;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
@@ -17,13 +17,13 @@ import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 public class PreAnalyzerImpl implements PreAnalyzer {
 
     private final SourceMapperImplementation sourceMapper;
-    private final RequestChecker requestChecker;
+    private final PaymentChecker paymentChecker;
     private final PaymentProducer paymentProducer;
     private final ObjectMapper objectMapper;
 
     @Override
     public boolean preAnalyze(PaymentRequestDto paymentRequest) {
-        boolean isPreCheckSuspicious = requestChecker.preCheckSuspicious(paymentRequest);
+        boolean isPreCheckSuspicious = paymentChecker.preCheckSuspicious(paymentRequest);
         if (isPreCheckSuspicious) {
             long key = paymentRequest.getId();
             byte[] paymentResultBytes = new byte[0];

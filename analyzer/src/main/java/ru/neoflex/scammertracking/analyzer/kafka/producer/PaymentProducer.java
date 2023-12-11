@@ -8,6 +8,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
+import ru.neoflex.scammertracking.analyzer.util.CustomLogs;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -41,11 +42,9 @@ public class PaymentProducer {
 
         future.whenCompleteAsync((result, exception) -> {
             if (null != exception) {
-                log.error("error. Unable to send message with key={} message={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } due to : {}",
-                        payment.getId(), payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate(), exception.getMessage());
+                CustomLogs.logErrorSendCheckedMessage(payment, exception);
             } else {
-                log.info("Sent message={ id={}, payerCardNumber={}, receiverCardNumber={}, latitude={}, longitude={}, date ={} } with offset=={} in checked-payments topic",
-                        payment.getId(), payment.getPayerCardNumber(), payment.getReceiverCardNumber(), payment.getCoordinates().getLatitude(), payment.getCoordinates().getLongitude(), payment.getDate(), result.getRecordMetadata().offset());
+                CustomLogs.logSendCheckedMessage(payment, result);
             }
         });
     }
@@ -56,11 +55,10 @@ public class PaymentProducer {
         CompletableFuture<SendResult<String, byte[]>> future = kafkaBytesTemplate.send(suspiciousPaymentsTopic, key, payment);
         future.whenCompleteAsync((result, exception) -> {
             if (null != exception) {
-                log.error("error. Unable to send bytes-array message with key={} due to : {}",
-                        key, exception.getMessage());
+                log.error("error. Unable to send bytes-array message with key={} due to : {}", key, exception.getMessage());
             } else {
-                log.info("Sent message with key={} and offset=={} in {} ",
-                        key, result.getRecordMetadata().offset(), suspiciousPaymentsTopic);
+                log.info("Sent message with key={} and offset=={} in {} ", key, result.getRecordMetadata().offset(), suspiciousPaymentsTopic);
+                storage.remove(Long.valueOf(key));
             }
         });
     }
@@ -71,12 +69,10 @@ public class PaymentProducer {
         CompletableFuture<SendResult<String, byte[]>> future = kafkaBytesTemplate.send(backoffPaymentsTopic, key, payment);
         future.whenCompleteAsync((result, exception) -> {
             if (null != exception) {
-                log.error("error. Unable to send bytes-array message with key={} in {} due to : {}",
-                        key, backoffPaymentsTopic, exception.getMessage());
+                log.error("error. Unable to send bytes-array message with key={} in {} due to : {}", key, backoffPaymentsTopic, exception.getMessage());
             } else {
                 storage.remove(Long.valueOf(key));
-                log.info("Sent message with key={} and offset=={} in {} ",
-                        key, result.getRecordMetadata().offset(), backoffPaymentsTopic);
+                log.info("Sent message with key={} and offset=={} in {} ", key, result.getRecordMetadata().offset(), backoffPaymentsTopic);
             }
         });
     }

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
-import ru.neoflex.scammertracking.analyzer.log.CustomLogs;
+import ru.neoflex.scammertracking.analyzer.util.CustomLogs;
 import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
 import java.util.HashMap;

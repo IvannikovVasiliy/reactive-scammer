@@ -33,8 +33,10 @@ public class RedisConfig {
     @Bean
     @Primary
     public ReactiveRedisConnectionFactory lettuceConnectionFactory() {
-        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(Duration.ofSeconds(REDIS_TIMEOUT))
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration
+                .builder()
+                .commandTimeout(Duration.ofMillis(5))
+                .shutdownTimeout(Duration.ofMillis(5))
                 .build();
 
         return new LettuceConnectionFactory(new RedisStandaloneConfiguration(HOST_NAME, PORT), clientConfig);

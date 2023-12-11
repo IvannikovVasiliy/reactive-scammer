@@ -10,7 +10,6 @@ import ru.neoflex.scammertracking.analyzer.client.ClientService;
 import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateGetLastPaymentDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.SavePaymentResponseDto;
-import ru.neoflex.scammertracking.analyzer.util.ConfigUtil;
 
 @Service
 @Slf4j
@@ -18,6 +17,10 @@ public class ClientServiceImpl implements ClientService {
 
     @Value("${hostPort.paymentService}")
     private String paymentServiceHostPort;
+    @Value("${app.lastPayment}")
+    private String lastPaymentEndpoint;
+    @Value("${app.savePayment}")
+    private String savePaymentEndpoint;
 
     @Override
     public Flux<AggregateGetLastPaymentDto> getLastPayment(Flux<AggregateGetLastPaymentDto> paymentRequests) {
@@ -26,7 +29,7 @@ public class ClientServiceImpl implements ClientService {
         return WebClient
                 .create(paymentServiceHostPort)
                 .post()
-                .uri(ConfigUtil.getLastPaymentEndpoint())
+                .uri(lastPaymentEndpoint)
                 .body(paymentRequests, Flux.class)
                 .retrieve()
                 .bodyToFlux(AggregateGetLastPaymentDto.class)
@@ -39,8 +42,9 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Flux<SavePaymentResponseDto> savePayment(Flux<SavePaymentRequestDto> savePaymentRequest) {
         return WebClient
-                .create("http://localhost:8082/payment/save")
+                .create(paymentServiceHostPort)
                 .post()
+                .uri(savePaymentEndpoint)
                 .body(savePaymentRequest, Flux.class)
                 .retrieve()
                 .bodyToFlux(SavePaymentResponseDto.class);

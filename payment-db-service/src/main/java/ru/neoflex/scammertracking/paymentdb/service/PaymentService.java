@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface PaymentService {
-    Flux<SavePaymentResponseDto> savePayment(/*@Valid*/ Flux<SavePaymentRequestDto> payment);
+    Flux<SavePaymentResponseDto> savePayment(Flux<SavePaymentRequestDto> payment);
 
     //    Mono<PaymentResponseDto> getLastPayment(@Size(min = 6, max = 60, message = "The length of cardNumber should be between 6 and 60") String cardNumber);
     Flux<AggregateLastPaymentDto> getLastPayment(/*@Size(min = 6, max = 60, message = "The length of cardNumber should be between 6 and 60")*/ Flux<AggregateLastPaymentDto> payments);
 
-    Mono<Void> putPayment(@Valid EditPaymentRequestDto editPaymentRequestDto);
+    Mono<Void> putPayment(EditPaymentRequestDto editPaymentRequestDto);
 
     Mono<Void> deletePaymentById(@NotNull Long id);
 //    PaymentResponseDto getLastPayment(Long id);

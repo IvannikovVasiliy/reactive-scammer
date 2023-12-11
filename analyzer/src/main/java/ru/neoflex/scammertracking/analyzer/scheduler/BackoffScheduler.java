@@ -13,6 +13,7 @@ import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @RequiredArgsConstructor
@@ -28,16 +29,20 @@ public class BackoffScheduler {
 
     @Scheduled(fixedRate = Constants.SCHEDULING_ITERATE_BACKOFF_PAYMENTS_INTERVAL)
     public void iterateBackoffPaymentsScheduled() {
+        AtomicLong al = new AtomicLong();
+        long time = new Date().getTime();
         storage.forEach((key, value) -> {
-            if (new Date().getTime() - value.getDate() > SIGN_HANDLING_BACKOFF_PAYMENT) {
-                byte[] savePaymentByte;
+            if (time - value.getDate() > SIGN_HANDLING_BACKOFF_PAYMENT) {
+                al.incrementAndGet();
                 try {
-                    savePaymentByte = objectMapper.writeValueAsBytes(value.getPaymentRequestDto());
+                    byte[] savePaymentByte = objectMapper.writeValueAsBytes(value.getPaymentRequestDto());
+                    paymentProducer.sendBackoffMessage(value.getPaymentRequestDto().getId().toString(), savePaymentByte);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-                paymentProducer.sendBackoffMessage(value.getPaymentRequestDto().getId().toString(), savePaymentByte);
+                storage.remove(key);
             }
+            System.out.println(al.get());
         });
     }
 }

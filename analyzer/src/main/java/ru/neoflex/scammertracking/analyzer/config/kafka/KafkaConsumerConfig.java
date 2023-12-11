@@ -23,8 +23,12 @@ public class KafkaConsumerConfig {
     private String bootstrapServers;
     @Value(value = "${spring.kafka.consumer.groupId}")
     private String groupId;
+    @Value(value = "${spring.kafka.consumer.groupIdBackoff}")
+    private String groupIdBackoff;
     @Value(value = "${spring.kafka.topic.payments}")
     private String paymentTopic;
+    @Value(value = "${spring.kafka.topic.backoffPayments}")
+    private String backoffPaymentTopic;
 
     @Bean
     public Consumer<String, byte[]> createConsumer() {
@@ -35,12 +39,28 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
-        //props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 20);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Arrays.asList(paymentTopic));
+        return consumer;
+    }
+
+    @Bean
+    public Consumer<String, byte[]> createBackoffConsumer() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupIdBackoff);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+
+        KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Arrays.asList(backoffPaymentTopic));
         return consumer;
     }
 }

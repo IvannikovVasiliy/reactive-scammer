@@ -39,6 +39,6 @@ public class PaymentCacheRepositoryImpl implements PaymentCacheRepository {
     @Override
     public Mono<Boolean> expire() {
         log.info("set expiration for payment cache");
-        return redisTemplate.expire(HASH_KEY, Duration.of(EXPIRATION_PAYMENT, ChronoUnit.DAYS/*seconds*/));
+        return redisTemplate.expire(HASH_KEY, Duration.of(EXPIRATION_PAYMENT, ChronoUnit.SECONDS));
     }
 }

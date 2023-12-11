@@ -7,4 +7,6 @@ public class Constants {
 
     public static final int RETRY_COUNT = 3;
     public static final int INTERVAL_COUNT = 1;
+
+    public static final String CORRELATION_ID_HEADER_NAME = "Correlation-Id";
 }

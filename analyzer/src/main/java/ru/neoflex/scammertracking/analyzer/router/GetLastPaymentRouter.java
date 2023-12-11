@@ -1,4 +1,4 @@
-package ru.neoflex.scammertracking.analyzer.service;
+package ru.neoflex.scammertracking.analyzer.router;
 
 import reactor.core.publisher.Flux;
 import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateGetLastPaymentDto;

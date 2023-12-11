@@ -21,15 +21,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class RequestCheckerImplTest {
+class PaymentCheckerImplTest {
 
     @Autowired
-    public RequestCheckerImplTest(RequestCheckerImpl checkRequest) {
+    public PaymentCheckerImplTest(PaymentCheckerImpl checkRequest) {
         this.checkRequest = checkRequest;
         this.objectMapper = new ObjectMapper();
     }
 
-    private final RequestCheckerImpl checkRequest;
+    private final PaymentCheckerImpl checkRequest;
     private final ObjectMapper objectMapper;
 
     @Test

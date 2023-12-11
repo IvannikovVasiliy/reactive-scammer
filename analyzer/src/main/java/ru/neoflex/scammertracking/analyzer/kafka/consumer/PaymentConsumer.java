@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.domain.model.WrapPaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
-import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
+import ru.neoflex.scammertracking.analyzer.router.GetCachedPaymentRouter;
 import ru.neoflex.scammertracking.analyzer.util.Constants;
 
 import java.io.IOException;
@@ -34,12 +34,14 @@ public class PaymentConsumer {
     @Autowired
     public PaymentConsumer(GetCachedPaymentRouter cachePaymentRouter,
                            PaymentProducer paymentProducer,
-                           Consumer<String, byte[]> consumer,
+                           @Qualifier("createConsumer") Consumer<String, byte[]> consumer,
+                           @Qualifier("createBackoffConsumer") Consumer<String, byte[]> backoffConsumer,
                            ObjectMapper objectMapper,
                            @Qualifier("storage") Map<Long, WrapPaymentRequestDto> storage) {
         this.cachePaymentRouter = cachePaymentRouter;
         this.paymentProducer = paymentProducer;
         this.consumer = consumer;
+        this.backoffConsumer = backoffConsumer;
         this.objectMapper = objectMapper;
         this.storage = storage;
     }
@@ -47,6 +49,7 @@ public class PaymentConsumer {
     private final GetCachedPaymentRouter cachePaymentRouter;
     private final PaymentProducer paymentProducer;
     private final Consumer<String, byte[]> consumer;
+    private final Consumer<String, byte[]> backoffConsumer;
     private final ObjectMapper objectMapper;
     private final Map<Long, WrapPaymentRequestDto> storage;
 
@@ -58,8 +61,6 @@ public class PaymentConsumer {
         log.info("Start pollMessages in scheduling");
 
         List<PaymentRequestDto> consumeMessagesList = new ArrayList<>();
-//        ConsumerRecords<String, byte[]> records =
-//                consumer.poll(Duration.ofMillis(500));
         Mono
                 .fromRunnable(() -> {
                     ConsumerRecords<String, byte[]> records =
@@ -73,7 +74,7 @@ public class PaymentConsumer {
                             PaymentRequestDto paymentRequest =
                                     objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
                             consumeMessagesList.add(paymentRequest);
-                            storage.put(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
+                            storage.putIfAbsent(paymentRequest.getId(), new WrapPaymentRequestDto(paymentRequest, new Date().getTime()));
                         }
                     } catch (IOException e) {
                         log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
@@ -81,10 +82,39 @@ public class PaymentConsumer {
                     }
                 })
                 .doOnSuccess(val -> {
-//                    if (records.count() > 0) {
                         Flux<PaymentRequestDto> paymentFlux = Flux.fromIterable(consumeMessagesList);
                         cachePaymentRouter.preAnalyzeConsumeMessage(paymentFlux);
-//                    }
+                })
+                .subscribe();
+    }
+
+    @Scheduled(fixedRate = Constants.SCHEDULING_POLL_MESSAGES_INTERVAL)
+    public void pollBackoffMessages() {
+        log.info("Start pollBackoffMessages in scheduling");
+
+        List<PaymentRequestDto> consumeMessagesList = new ArrayList<>();
+        Mono
+                .fromRunnable(() -> {
+                    ConsumerRecords<String, byte[]> records =
+                            backoffConsumer.poll(Duration.ofMillis(DURATION_POLL_MESSAGES_MILLIS));
+                    byte[] paymentRequestBytes = null;
+                    String key = null;
+                        try {
+                            for (ConsumerRecord<String, byte[]> record : records) {
+                            paymentRequestBytes = record.value();
+                            key = record.key();
+                            PaymentRequestDto paymentRequest =
+                                    objectMapper.readValue(paymentRequestBytes, PaymentRequestDto.class);
+                            consumeMessagesList.add(paymentRequest);
+                        }
+                    } catch (IOException e) {
+                        log.error("Cannot map input request={} to PaymentRequestDto.class", paymentRequestBytes);
+                        paymentProducer.sendSuspiciousMessage(key, paymentRequestBytes);
+                    }
+                })
+                .doOnSuccess(val -> {
+                    Flux<PaymentRequestDto> paymentFlux = Flux.fromIterable(consumeMessagesList);
+                    cachePaymentRouter.preAnalyzeConsumeMessage(paymentFlux);
                 })
                 .subscribe();
     }

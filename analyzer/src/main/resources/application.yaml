@@ -6,11 +6,13 @@ spring:
     bootstrapAddress: localhost:9092
     topic:
       payments: payments
+      backoffPayments: backoff-payments
       suspicious-payments: suspicious-payments
       checked-payments: checked-payments
       backoff-payments: backoff-payments
     consumer:
       groupId: analyzer-group-id
+      groupIdBackoff: analyzer-backoff-group-id
 
 redis:
   hostName: localhost
@@ -25,6 +27,8 @@ app:
   retryCount: 3
   retryIntervalSeconds: 3
   redisTimeout: 10
+  lastPayment: /payment/last-payment
+  savePayment: /payment/save
 
 logging:
   level:

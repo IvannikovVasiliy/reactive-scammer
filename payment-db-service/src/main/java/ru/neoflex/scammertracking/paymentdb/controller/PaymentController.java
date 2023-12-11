@@ -44,7 +44,7 @@ public class PaymentController {
 
     @PostMapping(value = "/save", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.CREATED)
-    public Flux<SavePaymentResponseDto> savePayment(/*@Valid*/ @RequestBody Flux<SavePaymentRequestDto> payment) {
+    public Flux<SavePaymentResponseDto> savePayment(@Valid @RequestBody Flux<SavePaymentRequestDto> payment) {
 //        payment.subscribe(new BaseSubscriber<SavePaymentRequestDto>() {
 //            @Override
 //            protected void hookOnSubscribe(Subscription subscription) {

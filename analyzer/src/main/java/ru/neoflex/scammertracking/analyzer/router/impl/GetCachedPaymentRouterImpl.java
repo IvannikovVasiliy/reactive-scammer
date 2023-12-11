@@ -1,10 +1,8 @@
-package ru.neoflex.scammertracking.analyzer.service.impl;
+package ru.neoflex.scammertracking.analyzer.router.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -13,11 +11,10 @@ import ru.neoflex.scammertracking.analyzer.domain.dto.AggregateGetLastPaymentDto
 import ru.neoflex.scammertracking.analyzer.domain.dto.LastPaymentResponseDto;
 import ru.neoflex.scammertracking.analyzer.domain.dto.PaymentRequestDto;
 import ru.neoflex.scammertracking.analyzer.exception.SuspiciousPaymentException;
-import ru.neoflex.scammertracking.analyzer.kafka.producer.PaymentProducer;
 import ru.neoflex.scammertracking.analyzer.mapper.SourceMapperImplementation;
 import ru.neoflex.scammertracking.analyzer.repository.PaymentCacheRepository;
-import ru.neoflex.scammertracking.analyzer.service.GetCachedPaymentRouter;
-import ru.neoflex.scammertracking.analyzer.service.GetLastPaymentRouter;
+import ru.neoflex.scammertracking.analyzer.router.GetCachedPaymentRouter;
+import ru.neoflex.scammertracking.analyzer.router.GetLastPaymentRouter;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,7 +28,6 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
     private final PaymentCacheRepository paymentCacheRepository;
     private final PreAnalyzer preAnalyzer;
     private final AtomicBoolean isRedisDropped;
-    private final ObjectMapper objectMapper;
 
     @Override
     public void preAnalyzeConsumeMessage(Flux<PaymentRequestDto> paymentRequestDtoFlux) {
@@ -41,13 +37,6 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
 
                     boolean isTrusted = preAnalyzer.preAnalyze(paymentRequest);
                     if (!isTrusted) {
-                        byte[] suspiciousPaymentBytes;
-                        try {
-                            suspiciousPaymentBytes = objectMapper.writeValueAsBytes(paymentRequest);
-                        } catch (JsonProcessingException e) {
-                            return Flux.error(new RuntimeException(e));
-                        }
-
                         return Flux.error(new SuspiciousPaymentException(String.format("Payment with id=%d is failed in a stage of pre-analyze", paymentRequest.getId())));
                     }
 
@@ -63,7 +52,7 @@ public class GetCachedPaymentRouterImpl implements GetCachedPaymentRouter {
                                     analyzeModel.setPaymentResponse(lastPaymentResponse);
                                 })
                                 .onErrorResume(err -> {
-                                    if (err instanceof RedisConnectionFailureException) {
+                                    if (err instanceof DataAccessException) {
                                         log.warn("Connection refused for Redis");
                                         isRedisDropped.set(true);
                                         return Mono.empty();
